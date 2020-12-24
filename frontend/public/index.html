@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Upload</title>
+    <link
+      href="https://fonts.googleapis.com/css?family=Baloo+2&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div id = "dir-name">
+    </div>
+    <div class="wrapper">
+      <div class="upload-console">
+        <h2 class="upload-console-header">Upload</h2>
+        <div class="upload-console-body">
+          <h3>Select files from your computer</h3>
+          <form action="/upload" method="POST" enctype="multipart/form-data">
+            <input
+              type="file"
+              name="files"
+              id="standard-upload-files"
+              webkitdirectory
+              mozdirectory
+            />
+            <label for="standard-upload-files"
+              <div id="standard-upload-file-text">Choose a file</div></label
+            >
+            <input type="submit" id="standard-upload" />
+            <label for="standard-upload">
+          </form>
+        </div>
+      </div>
+    </div>
+    <div id="uploads-finshed">
+      <div class="upload-console-uploads">
+        <ul id="upload-list"></ul>
+      </div>
+    </div>
+  </body>
+</html>

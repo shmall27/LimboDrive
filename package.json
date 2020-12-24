@@ -1,0 +1,26 @@
+{
+  "name": "limbodrive",
+  "version": "1.0.0",
+  "description": "Peer to peer web software for drive sharing in the browser.",
+  "main": "index.js",
+  "scripts": {
+    "server": "nodemon backend/server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shmall27/LimboDrive.git"
+  },
+  "author": "Samuel Hall",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/shmall27/LimboDrive/issues"
+  },
+  "homepage": "https://github.com/shmall27/LimboDrive#readme",
+  "dependencies": {
+    "axios": "^0.21.0",
+    "express": "^4.17.1",
+    "mongoose": "^5.11.4",
+    "nodemon": "^2.0.6",
+    "socket.io": "^3.0.3"
+  }
+}
