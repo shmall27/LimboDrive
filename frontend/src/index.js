@@ -1,7 +1,8 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import FileUI from "./FileUI";
-let fileTree = [];
+import axios from 'axios'
+
 // Standard form upload
 document
   .getElementById("standard-upload")
@@ -9,6 +10,8 @@ document
     let standardUploadFiles = document.getElementById("standard-upload-files")
       .files;
     e.preventDefault();
+
+    let fileTree = [];
 
     let level = { fileTree };
 
@@ -28,6 +31,14 @@ document
         return r[name];
       }, level);
     }
+    
+    axios.post('http://localhost:2000/upload', {
+      fileTree: fileTree
+    }).then((response) => {
+      console.log(response);
+    }, (error) => {
+      console.log(error);
+    });
     //Render the file tree component
     ReactDOM.render(
       <FileUI items={fileTree} depth={0} />,

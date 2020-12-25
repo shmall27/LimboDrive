@@ -4,9 +4,16 @@ import axios from 'axios'
 function FileUI(props) {
   const [miniTree, treeSet] = useState();
 
-  useEffect( ()=> {
-    
-  })
+  // useEffect(() => {
+  //   //Need to write API to handle this... to Express!
+  //   axios.get("URL_HERE")
+  //   .then(res => {
+  //     console.log(res)
+  //   })
+  //   .catch(err => {
+  //     console.log(err)
+  //   })
+  // })
   return props.items.map(item => {
     if (item.expand === false) {
       return (
