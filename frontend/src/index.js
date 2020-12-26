@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom";
-import FileUI from "./FileUI";
+import FileUI from "./components/FileUI";
 import axios from 'axios'
 
 // Standard form upload
@@ -25,21 +25,21 @@ document
             children: r[name].fileTree,
             expand: false,
             key: standardUploadFiles[i].webkitRelativePath,
-            data: standardUploadFiles[i]
           });
         }
         return r[name];
       }, level);
     }
-    
-    axios.post('http://localhost:2000/upload', {
+    console.log(fileTree)
+    //Send files to express server
+    axios.post('http://localhost:2000/upload/files', {
       fileTree: fileTree
     }).then((response) => {
       console.log(response);
     }, (error) => {
       console.log(error);
     });
-    //Render the file tree component
+    // Render the file tree component
     ReactDOM.render(
       <FileUI items={fileTree} depth={0} />,
       document.getElementById("upload-list")

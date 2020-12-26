@@ -4,16 +4,16 @@ import axios from 'axios'
 function FileUI(props) {
   const [miniTree, treeSet] = useState();
 
-  // useEffect(() => {
-  //   //Need to write API to handle this... to Express!
-  //   axios.get("URL_HERE")
-  //   .then(res => {
-  //     console.log(res)
-  //   })
-  //   .catch(err => {
-  //     console.log(err)
-  //   })
-  // })
+  useEffect(() => {
+    //Need to write API to handle this... to Express!
+    axios.get('http://localhost:2000/download/files')
+    .then(res => {
+      console.log(res.data)
+    })
+    .catch(err => {
+      console.log(err)
+    })
+  })
   return props.items.map(item => {
     if (item.expand === false) {
       return (
@@ -24,7 +24,7 @@ function FileUI(props) {
                 item.expand = !item.expand;
                 treeSet(item.children);
               } else {
-                console.log(item.data);
+                console.log(item.name);
               }
             }}
             style={{ paddingLeft: props.depth * 15 }}
