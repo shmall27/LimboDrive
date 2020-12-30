@@ -30,7 +30,6 @@ document
         return r[name];
       }, level);
     }
-    console.log(fileTree)
     //Send files to express server
     axios.post('http://localhost:2000/upload/files', {
       fileTree: fileTree
@@ -39,9 +38,21 @@ document
     }, (error) => {
       console.log(error);
     });
-    // Render the file tree component
+
+    // // Render the file tree component
+    // ReactDOM.render(
+    //   <FileUI items={fileTree} depth={0} />,
+    //   document.getElementById("upload-list")
+    // );
+  });
+
+  axios.get('http://localhost:2000/download/files')
+  .then(res => {
     ReactDOM.render(
-      <FileUI items={fileTree} depth={0} />,
+      <FileUI items={res.data} depth={0} />,
       document.getElementById("upload-list")
     );
-  });
+  })
+  .catch(err => {
+    console.log(err)
+  })

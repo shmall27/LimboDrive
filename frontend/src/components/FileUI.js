@@ -1,55 +1,49 @@
-import React, {useEffect, useState} from 'react'
-import axios from 'axios'
+import React, {useState} from 'react'
 
 function FileUI(props) {
   const [miniTree, treeSet] = useState();
-
-  useEffect(() => {
-    //Need to write API to handle this... to Express!
-    axios.get('http://localhost:2000/download/files')
-    .then(res => {
-      console.log(res.data)
-    })
-    .catch(err => {
-      console.log(err)
-    })
-  })
-  return props.items.map(item => {
-    if (item.expand === false) {
-      return (
-        <div key={item.key} className="fileIcon">
-          <p
-            onClick={() => {
-              if (item.children.length !== 0) {
-                item.expand = !item.expand;
-                treeSet(item.children);
-              } else {
-                console.log(item.name);
-              }
-            }}
-            style={{ paddingLeft: props.depth * 15 }}
-          >
-            {item.name}
-          </p>
-        </div>
-      );
-    } else {
-      item.expand = false;
-      return (
-        <div key={item.key} className="fileIcon">
-          <b
-            onClick={() => {
-              treeSet(item);
-            }}
-            style={{ paddingLeft: props.depth * 15 }}
-          >
-            {item.name}
-          </b>
-          <FileUI items={miniTree} depth={props.depth + 1} />
-        </div>
-      );
-    }
-  });
+    if(typeof props.items !== "undefined"){
+      return props.items.map(item => {
+        if (item.expand === false) {
+          return (
+            <div key={item.key} className="fileIcon">
+              <p
+                onClick={() => {
+                  if (item.children.length !== 0) {
+                    item.expand = !item.expand;
+                    treeSet(item.children);
+                  } else {
+                    console.log(item.name);
+                  }
+                }}
+                style={{ paddingLeft: props.depth * 15 }}
+              >
+                {item.name}
+              </p>
+            </div>
+          );
+        } else {
+          item.expand = false;
+          return (
+            <div key={item.key} className="fileIcon">
+              <b
+                onClick={() => {
+                  treeSet(item);
+                }}
+                style={{ paddingLeft: props.depth * 15 }}
+              >
+                {item.name}
+              </b>
+              <FileUI items={miniTree} depth={props.depth + 1} />
+            </div>
+          );
+        }
+      });
+  } else if(typeof props.items === "undefined") {
+    return (
+      null
+    )
+  }
 }
 
 export default FileUI;
