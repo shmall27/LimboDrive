@@ -38,12 +38,6 @@ document
     }, (error) => {
       console.log(error);
     });
-
-    // // Render the file tree component
-    // ReactDOM.render(
-    //   <FileUI items={fileTree} depth={0} />,
-    //   document.getElementById("upload-list")
-    // );
   });
 
   axios.get('http://localhost:2000/download/files')
