@@ -26,10 +26,11 @@ function createFileTree(e) {
       return r[name];
     }, level);
   }
+
   //Send files to express server
   axios
-    .post('http://localhost:2000/upload/files', {
-      fileTree: fileTree
+    .post('http://localhost:2000/upload', {
+      fileTree
     })
     .then(
       response => {
@@ -44,7 +45,7 @@ function createFileTree(e) {
 function UploadForm() {
   const [res, setRes] = useState(null);
   useEffect(async () => {
-    const response = await axios.get('http://localhost:2000/download/files');
+    const response = await axios.get('http://localhost:2000/placeholder');
     setRes(response);
   }, []);
   return (
