@@ -6,10 +6,32 @@ function Login() {
     email: '',
     password: ''
   });
+
+  function submitPost() {
+    axios
+      .post('http://localhost:2000/login', {
+        creds
+      })
+      .then(
+        response => {
+          console.log(response);
+        },
+        error => {
+          console.log(error);
+        }
+      );
+  }
+
   return (
     <>
       <h3>Login</h3>
-      <form>
+      <form
+        onSubmit={e => {
+          console.log(creds);
+          submitPost();
+          e.preventDefault();
+        }}
+      >
         <label htmlFor="email-login">Email</label>
         <br />
         <input

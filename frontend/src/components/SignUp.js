@@ -6,10 +6,31 @@ function SignUp() {
     email: '',
     password: ''
   });
+
+  function submitPost() {
+    axios
+      .post('http://localhost:2000/signup', {
+        creds
+      })
+      .then(
+        response => {
+          console.log(response);
+        },
+        error => {
+          console.log(error);
+        }
+      );
+  }
   return (
     <>
       <h3>Sign-Up</h3>
-      <form>
+      <form
+        onSubmit={e => {
+          console.log(creds);
+          submitPost();
+          e.preventDefault();
+        }}
+      >
         <label htmlFor="email-signup">Email</label>
         <br />
         <input
@@ -27,16 +48,12 @@ function SignUp() {
           type="password"
           id="password-signup"
           name="password-signup"
-          onChange={e =>
-            setCreds({ email: creds.email, password: e.target.value })
-          }
+          onChange={e => {
+            setCreds({ email: creds.email, password: e.target.value });
+          }}
         />
         <br />
-        <input
-          type="submit"
-          value="Sign-Up"
-          onSubmit={console.log(creds)}
-        ></input>
+        <input type="submit" value="Sign-Up"></input>
       </form>
     </>
   );
