@@ -14,14 +14,14 @@ function Login() {
       })
       .then(
         response => {
-          console.log(response);
+          window.localStorage.setItem('jwt', JSON.stringify(response));
         },
         error => {
           console.log(error);
         }
       );
   }
-
+  console.log(JSON.parse(window.localStorage.getItem('jwt')));
   return (
     <>
       <h3>Login</h3>
