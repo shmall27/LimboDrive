@@ -4,7 +4,6 @@ const app = express();
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-
 const Rooms = require('./models/Rooms');
 const Users = require('./models/Users');
 
@@ -27,21 +26,6 @@ const DBRooms = temp_db.model('DBRooms', Rooms);
 
 const DBUsers = user_db.model('DBUsers', Users);
 
-function verifyToken(req, res, next) {
-  const webToken = req.header('web-token');
-  if (!webToken) {
-    res.status(401).send('Please sign in or create an account.');
-
-    try {
-      const verified = jwt.verify(webToken, 'tokenSecretGoesHere');
-      req.userExists = verified;
-      next();
-    } catch {
-      res.status(400).send('Invalid token.');
-    }
-  }
-}
-
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 
@@ -52,26 +36,46 @@ app.listen(port, () => console.log(`Server running on port ${port}`));
 //MIDDLEWARE
 //Routes user file tree to mongoDB
 app.post('/upload', (req, res) => {
-  const dbFiles = new DBRooms({
-    name: req.body.fileTree[0].name,
-    children: req.body.fileTree[0].children,
-    key: req.body.fileTree[0].key
-  });
+  const webToken = req.body.jwt;
+  if (!webToken) {
+    res.status(401).send('Access Denied');
+  } else {
+    try {
+      jwt.verify(webToken, 'tokenSecretGoesHere');
+      const dbFiles = new DBRooms({
+        name: req.body.fileTree[0].name,
+        children: req.body.fileTree[0].children,
+        key: req.body.fileTree[0].key
+      });
 
-  dbFiles.save(err => {
-    if (err) return handleError(err);
-  });
+      dbFiles.save(err => {
+        if (err) return handleError(err);
+      });
+    } catch (err) {
+      res.status(400).send('Invalid Token');
+    }
+  }
 });
 
 //Routes file tree from mongoDB back to browser
-app.get('/placeholder', (req, res) => {
-  DBRooms.find({}, function(err, result) {
-    if (err) {
-      console.log(err);
-    } else {
-      res.json(result);
+app.post('/placeholder', (req, res) => {
+  const webToken = req.body.jwt;
+  if (!webToken) {
+    res.status(401).send('Access Denied');
+  } else {
+    try {
+      jwt.verify(webToken, 'tokenSecretGoesHere');
+      DBRooms.find({}, function(err, result) {
+        if (err) {
+          console.log(err);
+        } else {
+          res.json(result);
+        }
+      });
+    } catch (err) {
+      res.status(400).send('Invalid Token');
     }
-  });
+  }
 });
 
 //Validates user input with mongoDB documents

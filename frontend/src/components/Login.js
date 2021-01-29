@@ -15,19 +15,19 @@ function Login() {
       .then(
         response => {
           window.localStorage.setItem('jwt', JSON.stringify(response));
+          console.log(JSON.parse(window.localStorage.getItem('jwt')));
         },
         error => {
           console.log(error);
         }
       );
   }
-  console.log(JSON.parse(window.localStorage.getItem('jwt')));
+
   return (
     <>
       <h3>Login</h3>
       <form
         onSubmit={e => {
-          console.log(creds);
           submitPost();
           e.preventDefault();
         }}
