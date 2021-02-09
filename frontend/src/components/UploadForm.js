@@ -1,61 +1,21 @@
 import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import FileUI from './FileUI';
-import Login from './Login';
-import SignUp from './SignUp';
-function createFileTree(e) {
-  let standardUploadFiles = document.getElementById('standard-upload-files')
-    .files;
-  e.preventDefault();
-
-  let fileTree = [];
-
-  let level = { fileTree };
-
-  for (let i = 0; i < standardUploadFiles.length; i++) {
-    //Recreate the file tree
-    standardUploadFiles[i].webkitRelativePath.split('/').reduce((r, name) => {
-      if (!r[name]) {
-        r[name] = { fileTree: [] };
-        r.fileTree.push({
-          name,
-          children: r[name].fileTree,
-          expand: false,
-          key: standardUploadFiles[i].webkitRelativePath
-        });
-      }
-      return r[name];
-    }, level);
-  }
-  //Send files to express server
-  if (localStorage.length > 0) {
-    axios
-      .post('http://localhost:2000/upload', {
-        fileTree,
-        jwt: JSON.parse(window.localStorage.getItem('jwt')).data
-      })
-      .then(
-        response => {
-          console.log(response);
-        },
-        error => {
-          console.log(error);
-        }
-      );
-  } else console.log('Please sign in.');
-}
 
 function UploadForm() {
   const [res, setRes] = useState(null);
+  const { dirID } = useParams();
   useEffect(async () => {
     if (localStorage.length > 0) {
       axios
-        .post('http://localhost:2000/placeholder', {
-          jwt: JSON.parse(window.localStorage.getItem('jwt')).data
+        .post('http://localhost:2000/rooms-files/', {
+          jwt: JSON.parse(window.localStorage.getItem('jwt')).data,
+          dirID
         })
         .then(
           response => {
-            setRes(response);
+            setRes(response.data);
           },
           error => {
             console.log(error);
@@ -63,25 +23,8 @@ function UploadForm() {
         );
     }
   }, []);
-  if (!localStorage.length > 0) {
-    //This should definitely use Router instead of just calling the component
-    //Still gonna push it to GitHub for now though
-    return (
-      <>
-        <div id="intro">
-          <h3>LimboDrive...</h3>
-          <em>
-            is a Web App that utilizes WebRTC to share entire drives of files
-            without the need for cloud storage!
-          </em>
-        </div>
-        <br />
-        <Login />
-        <br />
-        <SignUp />
-      </>
-    );
-  } else {
+  console.log(res);
+  if (localStorage.length > 0) {
     return (
       <>
         <div id="upload-form">
@@ -97,16 +40,61 @@ function UploadForm() {
             <input
               type="submit"
               id="standard-upload"
-              onClick={createFileTree}
+              onClick={e => {
+                let standardUploadFiles = document.getElementById(
+                  'standard-upload-files'
+                ).files;
+                e.preventDefault();
+
+                let fileTree = [];
+
+                let level = { fileTree };
+
+                for (let i = 0; i < standardUploadFiles.length; i++) {
+                  //Recreate the file tree
+                  standardUploadFiles[i].webkitRelativePath
+                    .split('/')
+                    .reduce((r, name) => {
+                      if (!r[name]) {
+                        r[name] = { fileTree: [] };
+                        r.fileTree.push({
+                          name,
+                          children: r[name].fileTree,
+                          expand: false,
+                          key: standardUploadFiles[i].webkitRelativePath
+                        });
+                      }
+                      return r[name];
+                    }, level);
+                }
+
+                //Send files to express server
+                if (localStorage.length > 0) {
+                  axios
+                    .post('http://localhost:2000/upload', {
+                      dirID,
+                      fileTree,
+                      jwt: JSON.parse(window.localStorage.getItem('jwt')).data
+                    })
+                    .then(
+                      response => {
+                        console.log(response);
+                      },
+                      error => {
+                        console.log(error);
+                      }
+                    );
+                } else console.log('Please sign in.');
+              }}
             />
           </form>
         </div>
 
-        <div id="upload-console">
-          {res && <FileUI items={res.data} depth={0} />}
-        </div>
+        <div id="upload-console">{res && <FileUI items={res} depth={0} />}</div>
       </>
     );
+  } else {
+    window.location.href = 'http://localhost:3000/';
   }
 }
 

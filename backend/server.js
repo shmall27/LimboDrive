@@ -37,16 +37,31 @@ app.listen(port, () => console.log(`Server running on port ${port}`));
 //Routes user file tree to mongoDB
 app.post('/upload', (req, res) => {
   const webToken = req.body.jwt;
+  const dirID = req.body.dirID;
   if (!webToken) {
     res.status(401).send('Access Denied');
   } else {
     try {
       jwt.verify(webToken, 'tokenSecretGoesHere');
-      const dbFiles = new DBRooms({
+
+      console.log(dirID);
+      let fileTreeObj = {
         name: req.body.fileTree[0].name,
         children: req.body.fileTree[0].children,
         key: req.body.fileTree[0].key
-      });
+      };
+      DBRooms.findOneAndUpdate(
+        { _id: dirID },
+        { $push: { fileTree: fileTreeObj } },
+        (err, res) => {
+          if (err) {
+            console.log(err);
+          } else {
+            console.log(res);
+          }
+        },
+        { useFindAndModify: false }
+      );
 
       dbFiles.save(err => {
         if (err) return handleError(err);
@@ -58,20 +73,56 @@ app.post('/upload', (req, res) => {
 });
 
 //Routes file tree from mongoDB back to browser
-app.post('/placeholder', (req, res) => {
+app.post('/rooms-files', (req, res) => {
   const webToken = req.body.jwt;
+  const dirID = req.body.dirID;
   if (!webToken) {
     res.status(401).send('Access Denied');
   } else {
     try {
       jwt.verify(webToken, 'tokenSecretGoesHere');
-      DBRooms.find({}, function(err, result) {
+      DBRooms.find({ _id: dirID }, function(err, result) {
         if (err) {
           console.log(err);
         } else {
-          res.json(result);
+          res.send(result[0].fileTree);
         }
       });
+    } catch (err) {
+      res.status(400).send('Invalid Token');
+    }
+  }
+});
+
+app.post('/rooms', async (req, res) => {
+  let dirList = [];
+  const webToken = req.body.jwt;
+  if (!webToken) {
+    res.status(401).send('Access Denied');
+  } else {
+    try {
+      const userDocs = await DBRooms.find({
+        authUsers: `${jwt.verify(webToken, 'tokenSecretGoesHere').id}`
+      }).exec();
+      for (let i = 0; i < userDocs.length; i++) {
+        dirList.push([userDocs[i].dirName, userDocs[i]._id]);
+      }
+      res.send(dirList);
+    } catch (err) {
+      res.status(400).send('Invalid Token');
+    }
+  }
+});
+
+app.post('/room-select', async (req, res) => {
+  const webToken = req.body.jwt;
+  const dirID = req.body.dirID;
+  if (!webToken) {
+    res.status(401).send('Access Denied!');
+  } else {
+    try {
+      jwt.verify(webToken, 'tokenSecretGoesHere');
+      res.send('Authenticated');
     } catch (err) {
       res.status(400).send('Invalid Token');
     }

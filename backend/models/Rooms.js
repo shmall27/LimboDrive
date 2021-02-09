@@ -1,13 +1,19 @@
 const mongoose = require('mongoose');
 
-const roomSchema = new mongoose.Schema({
-  name: { type: String },
-  children: { type: Array },
-  key: { type: String },
-  expand: {
-    type: Boolean,
-    default: false
-  }
+const RoomSchema = new mongoose.Schema({
+  dirName: String,
+  fileTree: [
+    {
+      name: String,
+      children: Array,
+      key: String,
+      expand: {
+        type: Boolean,
+        default: false
+      }
+    }
+  ],
+  authUsers: [String]
 });
 
-module.exports = roomSchema;
+module.exports = RoomSchema;

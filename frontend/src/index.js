@@ -1,9 +1,5 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import UploadForm from './components/UploadForm';
-import Login from './components/Login';
-import SignUp from './components/SignUp';
+import App from './App';
 
-ReactDOM.render(<UploadForm />, document.getElementById('upload-console'));
-// ReactDOM.render(<Login />, document.getElementById('login'));
-// ReactDOM.render(<SignUp />, document.getElementById('sign-up'));
+ReactDOM.render(<App />, document.getElementById('appLanding'));

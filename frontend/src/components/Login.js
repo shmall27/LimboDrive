@@ -16,6 +16,7 @@ function Login() {
         response => {
           window.localStorage.setItem('jwt', JSON.stringify(response));
           console.log(JSON.parse(window.localStorage.getItem('jwt')));
+          window.location.href = 'http://localhost:3000/rooms';
         },
         error => {
           console.log(error);
