@@ -23,12 +23,11 @@ function UploadForm() {
         );
     }
   }, []);
-  console.log(res);
   if (localStorage.length > 0) {
     return (
       <>
         <div id="upload-form">
-          <h3>Select files from your computer</h3>
+          <h3>Upload files from your computer!</h3>
           <form>
             <input
               type="file"
@@ -90,7 +89,9 @@ function UploadForm() {
           </form>
         </div>
 
-        <div id="upload-console">{res && <FileUI items={res} depth={0} />}</div>
+        <div id="upload-console">
+          {res && <FileUI items={res.fileTree} depth={0} />}
+        </div>
       </>
     );
   } else {

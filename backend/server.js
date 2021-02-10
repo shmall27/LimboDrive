@@ -62,10 +62,6 @@ app.post('/upload', (req, res) => {
         },
         { useFindAndModify: false }
       );
-
-      dbFiles.save(err => {
-        if (err) return handleError(err);
-      });
     } catch (err) {
       res.status(400).send('Invalid Token');
     }
@@ -85,7 +81,8 @@ app.post('/rooms-files', (req, res) => {
         if (err) {
           console.log(err);
         } else {
-          res.send(result[0].fileTree);
+          console.log(result[0]);
+          res.send(result[0]);
         }
       });
     } catch (err) {
@@ -94,6 +91,7 @@ app.post('/rooms-files', (req, res) => {
   }
 });
 
+//Get all rooms that the user is authorized to view
 app.post('/rooms', async (req, res) => {
   let dirList = [];
   const webToken = req.body.jwt;
@@ -114,9 +112,29 @@ app.post('/rooms', async (req, res) => {
   }
 });
 
-app.post('/room-select', async (req, res) => {
+//Create a new directory room
+app.post('/room-create', async (req, res) => {
   const webToken = req.body.jwt;
-  const dirID = req.body.dirID;
+  if (!webToken) {
+    res.status(401).send('Access Denied!');
+  } else {
+    try {
+      jwt.verify(webToken, 'tokenSecretGoesHere');
+      new DBRooms({
+        authUsers: jwt.verify(webToken, 'tokenSecretGoesHere').id,
+        dirName: 'untitled'
+      }).save(err => {
+        console.log(err);
+      });
+    } catch (err) {
+      res.status(400).send('Invalid Token');
+    }
+  }
+});
+
+//Verify this route with JWT
+app.post('/room-select', (req, res) => {
+  const webToken = req.body.jwt;
   if (!webToken) {
     res.status(401).send('Access Denied!');
   } else {

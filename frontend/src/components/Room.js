@@ -24,7 +24,26 @@ function Rooms() {
       <>
         <h3>Select a room or create a new one!</h3>
         <br />
-        <button type="button">Create a new room!</button>
+        <button
+          onClick={e => {
+            e.preventDefault();
+            if (localStorage.length > 0) {
+              axios
+                .post('http://localhost:2000/room-create', {
+                  jwt: JSON.parse(window.localStorage.getItem('jwt')).data
+                })
+                .then(
+                  response => {},
+                  error => {
+                    console.log(error);
+                  }
+                );
+            }
+          }}
+          type="button"
+        >
+          Create a new room!
+        </button>
         {dirName &&
           dirName.map(dirs => (
             <p
