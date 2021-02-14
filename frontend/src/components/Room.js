@@ -4,13 +4,14 @@ import axios from 'axios';
 
 import UploadForm from './UploadForm';
 import DirName from './DirName';
+import UserInvite from './UserInvite';
 
 import './styles.css';
 
 function Room() {
   const [res, setRes] = useState(null);
   const { dirID } = useParams();
-  useEffect(async () => {
+  useEffect(() => {
     if (localStorage.length > 0) {
       axios
         .post('http://localhost:2000/rooms-files/', {
@@ -37,6 +38,7 @@ function Room() {
         />
       )}
       {res && <UploadForm fileTree={res.fileTree} dirID={dirID} />}
+      {res && <UserInvite dirID={dirID} />}
     </>
   );
 }

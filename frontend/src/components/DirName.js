@@ -15,7 +15,7 @@ function DirName(props) {
     if (isInputActive) {
       props.onSetText(inputValue);
       setIsInputActive(false);
-      if (props.text != inputValue) {
+      if (props.text !== inputValue) {
         //Update database here
         axios
           .post('http://localhost:2000/update-name', {
@@ -46,7 +46,7 @@ function DirName(props) {
       if (enter) {
         props.onSetText(inputValue);
         setIsInputActive(false);
-        if (props.text != inputValue) {
+        if (props.text !== inputValue) {
           //Update database here
           axios
             .post('http://localhost:2000/update-name', {

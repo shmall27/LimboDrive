@@ -44,7 +44,6 @@ app.post('/upload', (req, res) => {
     try {
       jwt.verify(webToken, 'tokenSecretGoesHere');
 
-      console.log(dirID);
       let fileTreeObj = {
         name: req.body.fileTree[0].name,
         children: req.body.fileTree[0].children,
@@ -57,7 +56,7 @@ app.post('/upload', (req, res) => {
           if (err) {
             console.log(err);
           } else {
-            console.log(res);
+            // console.log(res);
           }
         },
         { useFindAndModify: false }
@@ -165,7 +164,39 @@ app.post('/update-name', (req, res) => {
           if (err) {
             console.log(err);
           } else {
-            console.log(res);
+            // console.log(res);
+          }
+        },
+        { useFindAndModify: false }
+      );
+    } catch (err) {
+      res.status(400).send('Invalid Token');
+    }
+  }
+});
+
+app.post('/invite-user', async (req, res) => {
+  const webToken = req.body.jwt;
+  const dirID = req.body.dirID;
+  const invitedUser = req.body.userEmail;
+
+  if (!webToken) {
+    res.status(401).send('Access Denied!');
+  } else {
+    try {
+      jwt.verify(webToken, 'tokenSecretGoesHere');
+      let checkEmail = await DBUsers.findOne({ email: invitedUser });
+      DBRooms.findOneAndUpdate(
+        {
+          _id: dirID,
+          authUsers: jwt.verify(webToken, 'tokenSecretGoesHere').id
+        },
+        { $push: { authUsers: checkEmail._id } },
+        (err, res) => {
+          if (err) {
+            console.log(err);
+          } else {
+            // console.log(res);
           }
         },
         { useFindAndModify: false }
