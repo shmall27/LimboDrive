@@ -1,17 +1,25 @@
 import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import axios from 'axios';
 
-function Rooms() {
-  const [dirName, setDirName] = useState(null);
+import UploadForm from './UploadForm';
+import DirName from './DirName';
+
+import './styles.css';
+
+function Room() {
+  const [res, setRes] = useState(null);
+  const { dirID } = useParams();
   useEffect(async () => {
     if (localStorage.length > 0) {
       axios
-        .post('http://localhost:2000/rooms', {
-          jwt: JSON.parse(window.localStorage.getItem('jwt')).data
+        .post('http://localhost:2000/rooms-files/', {
+          jwt: JSON.parse(window.localStorage.getItem('jwt')).data,
+          dirID
         })
         .then(
           response => {
-            setDirName(response.data);
+            setRes(response.data);
           },
           error => {
             console.log(error);
@@ -19,61 +27,18 @@ function Rooms() {
         );
     }
   }, []);
-  if (localStorage.length > 0) {
-    return (
-      <>
-        <h3>Select a room or create a new one!</h3>
-        <br />
-        <button
-          onClick={e => {
-            e.preventDefault();
-            if (localStorage.length > 0) {
-              axios
-                .post('http://localhost:2000/room-create', {
-                  jwt: JSON.parse(window.localStorage.getItem('jwt')).data
-                })
-                .then(
-                  response => {},
-                  error => {
-                    console.log(error);
-                  }
-                );
-            }
-          }}
-          type="button"
-        >
-          Create a new room!
-        </button>
-        {dirName &&
-          dirName.map(dirs => (
-            <p
-              onClick={e => {
-                if (localStorage.length > 0) {
-                  axios
-                    .post('http://localhost:2000/room-select', {
-                      jwt: JSON.parse(window.localStorage.getItem('jwt')).data,
-                      dirID: dirs[1]
-                    })
-                    .then(
-                      response => {
-                        window.location.href = `http://localhost:3000/rooms/${dirs[1]}`;
-                      },
-                      error => {
-                        console.log(error);
-                      }
-                    );
-                }
-              }}
-              key={dirs[1]}
-            >
-              {dirs[0]}
-            </p>
-          ))}
-      </>
-    );
-  } else {
-    window.location.href = 'http://localhost:3000/';
-  }
+  return (
+    <>
+      {res && (
+        <DirName
+          dirID={dirID}
+          text={res.dirName}
+          onSetText={text => setRes({ dirName: text, fileTree: res.fileTree })}
+        />
+      )}
+      {res && <UploadForm fileTree={res.fileTree} dirID={dirID} />}
+    </>
+  );
 }
 
-export default Rooms;
+export default Room;

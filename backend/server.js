@@ -81,7 +81,6 @@ app.post('/rooms-files', (req, res) => {
         if (err) {
           console.log(err);
         } else {
-          console.log(result[0]);
           res.send(result[0]);
         }
       });
@@ -141,6 +140,36 @@ app.post('/room-select', (req, res) => {
     try {
       jwt.verify(webToken, 'tokenSecretGoesHere');
       res.send('Authenticated');
+    } catch (err) {
+      res.status(400).send('Invalid Token');
+    }
+  }
+});
+
+app.post('/update-name', (req, res) => {
+  const webToken = req.body.jwt;
+  const dirID = req.body.dirID;
+  const dirName = req.body.dirName;
+  if (!webToken) {
+    res.status(401).send('Access Denied!');
+  } else {
+    try {
+      jwt.verify(webToken, 'tokenSecretGoesHere');
+      DBRooms.findOneAndUpdate(
+        {
+          _id: dirID,
+          authUsers: jwt.verify(webToken, 'tokenSecretGoesHere').id
+        },
+        { dirName: dirName },
+        (err, res) => {
+          if (err) {
+            console.log(err);
+          } else {
+            console.log(res);
+          }
+        },
+        { useFindAndModify: false }
+      );
     } catch (err) {
       res.status(400).send('Invalid Token');
     }
