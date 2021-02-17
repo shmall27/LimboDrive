@@ -29,6 +29,7 @@ function UploadForm(props) {
 
               for (let i = 0; i < standardUploadFiles.length; i++) {
                 //Recreate the file tree
+                console.log(standardUploadFiles[i]);
                 standardUploadFiles[i].webkitRelativePath
                   .split('/')
                   .reduce((r, name) => {

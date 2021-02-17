@@ -1,9 +1,14 @@
 const express = require('express');
 const cors = require('cors');
-const app = express();
+const socketio = require('socket.io');
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const http = require('http');
+
+const app = express();
+const server = http.createServer(app);
+const io = socketio(server);
 const Rooms = require('./models/Rooms');
 const Users = require('./models/Users');
 
@@ -29,11 +34,14 @@ const DBUsers = user_db.model('DBUsers', Users);
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 
-const port = 2000;
+//Socket.io Middleware
+io.on('start', socket => {
+  socket.on('fileSelect', data => {
+    console.log(data);
+  });
+});
 
-app.listen(port, () => console.log(`Server running on port ${port}`));
-
-//MIDDLEWARE
+//Express Middleware
 //Routes user file tree to mongoDB
 app.post('/upload', (req, res) => {
   const webToken = req.body.jwt;
@@ -248,3 +256,6 @@ app.post('/signup', async (req, res) => {
     `Email: ${req.body.creds.email}, Password: ${req.body.creds.password}`
   );
 });
+
+const port = 2000;
+server.listen(port, () => console.log(`Server running on port ${port}`));
