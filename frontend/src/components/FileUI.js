@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-const io = require('socket.io-client');
-const socket = io();
-
+const socket = require('socket.io-client')
 function FileUI(props) {
+
+  const fileSocket = socket('http://localhost:2000')
   const [miniTree, treeSet] = useState();
   if (typeof props.items !== 'undefined') {
     if (props.items.length > 0) {
@@ -27,8 +27,10 @@ function FileUI(props) {
                 id="downlaod"
                 onClick={e => {
                   e.preventDefault();
-                  socket.emit('fileSelect', item.name);
-                  console.log(item.name);
+                  if(item.name){
+                   fileSocket.emit('fileSelect', item.name);
+                   console.log(item.name);
+                  }
                 }}
               ></button>
             </div>
@@ -45,14 +47,6 @@ function FileUI(props) {
               >
                 {item.name}
               </b>
-              <button
-                id="downlaod"
-                onClick={e => {
-                  e.preventDefault();
-                  socket.emit('fileSelect', item.name);
-                  console.log(item.name);
-                }}
-              ></button>
               <FileUI items={miniTree} depth={props.depth + 1} />
             </div>
           );

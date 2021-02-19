@@ -8,7 +8,13 @@ const http = require('http');
 
 const app = express();
 const server = http.createServer(app);
-const io = socketio(server);
+const io = socketio(server, {
+  cors: {
+    origin: "http://localhost:3000",
+    methods: ["GET", "POST"],
+    credentials: true
+  }
+});
 const Rooms = require('./models/Rooms');
 const Users = require('./models/Users');
 

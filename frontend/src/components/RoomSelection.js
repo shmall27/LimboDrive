@@ -3,7 +3,7 @@ import axios from 'axios';
 
 function RoomSelection() {
   const [dirName, setDirName] = useState(null);
-  useEffect(async () => {
+  useEffect(() => {
     if (localStorage.length > 0) {
       axios
         .post('http://localhost:2000/rooms', {
