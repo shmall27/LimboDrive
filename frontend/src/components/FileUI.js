@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
-const socket = require('socket.io-client')
-function FileUI(props) {
+import React, { useState, useEffect } from 'react';
+const io = require('socket.io-client')
+let socket;
 
-  const fileSocket = socket('http://localhost:2000')
+function FileUI(props) {
+  useEffect(() => {
+    socket = io('http://localhost:2000')
+  }, [])
   const [miniTree, treeSet] = useState();
   if (typeof props.items !== 'undefined') {
     if (props.items.length > 0) {
@@ -15,8 +18,6 @@ function FileUI(props) {
                   if (item.children.length !== 0) {
                     item.expand = !item.expand;
                     treeSet(item.children);
-                  } else {
-                    console.log(item.name);
                   }
                 }}
                 style={{ paddingLeft: props.depth * 15 }}
@@ -28,7 +29,7 @@ function FileUI(props) {
                 onClick={e => {
                   e.preventDefault();
                   if(item.name){
-                   fileSocket.emit('fileSelect', item.name);
+                   socket.emit('fileSelect', item.name);
                    console.log(item.name);
                   }
                 }}

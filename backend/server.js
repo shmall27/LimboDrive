@@ -1,22 +1,22 @@
 const express = require('express');
 const cors = require('cors');
-const socketio = require('socket.io');
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const http = require('http');
-
 const app = express();
-const server = http.createServer(app);
-const io = socketio(server, {
-  cors: {
-    origin: "http://localhost:3000",
-    methods: ["GET", "POST"],
-    credentials: true
-  }
-});
+const httpServer = require('http').createServer(app)
+
 const Rooms = require('./models/Rooms');
 const Users = require('./models/Users');
+
+const port = 2000
+httpServer.listen(port, () => console.log(`Server running on port ${port}`));
+
+const io = require('socket.io')(httpServer, {
+  cors: {
+    origin: "http://localhost:3000"
+  }
+})
 
 const connParams = {
   useNewUrlParser: true,
@@ -41,11 +41,11 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 
 //Socket.io Middleware
-io.on('start', socket => {
+io.on('connection', socket => {
   socket.on('fileSelect', data => {
-    console.log(data);
-  });
-});
+    console.log(data)
+  })
+})
 
 //Express Middleware
 //Routes user file tree to mongoDB
@@ -263,5 +263,3 @@ app.post('/signup', async (req, res) => {
   );
 });
 
-const port = 2000;
-server.listen(port, () => console.log(`Server running on port ${port}`));
