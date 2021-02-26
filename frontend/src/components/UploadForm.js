@@ -1,8 +1,10 @@
 import React from 'react';
 import axios from 'axios';
+import JSZip from 'jszip';
 import FileUI from './FileUI';
 
 function UploadForm(props) {
+  let fileBufferArr = [];
   if (localStorage.length > 0) {
     return (
       <>
@@ -27,9 +29,11 @@ function UploadForm(props) {
 
               let level = { fileTree };
 
+              console.log(standardUploadFiles);
+
               for (let i = 0; i < standardUploadFiles.length; i++) {
-                //Recreate the file tree
                 console.log(standardUploadFiles[i]);
+                //Recreate the file tree
                 standardUploadFiles[i].webkitRelativePath
                   .split('/')
                   .reduce((r, name) => {
@@ -68,7 +72,15 @@ function UploadForm(props) {
         </form>
 
         <div id="upload-console">
-          <FileUI items={props.fileTree} depth={0} />
+          {props.fileTree.map(userUpload => {
+            console.log(userUpload);
+            return (
+              <div key={userUpload._id}>
+                <h3>{userUpload.hostEmail}</h3>
+                <FileUI items={userUpload.fileTree} depth={0} />
+              </div>
+            );
+          })}
         </div>
       </>
     );

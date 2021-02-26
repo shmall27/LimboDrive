@@ -1,18 +1,23 @@
 import React, { useState, useEffect } from 'react';
-const io = require('socket.io-client')
+const io = require('socket.io-client');
 let socket;
 
 function FileUI(props) {
   useEffect(() => {
-    socket = io('http://localhost:2000')
-  }, [])
+    socket = io('http://localhost:2000');
+    socket.emit(
+      'userSocket',
+      JSON.parse(window.localStorage.getItem('jwt')).data
+    );
+  }, []);
+
   const [miniTree, treeSet] = useState();
   if (typeof props.items !== 'undefined') {
     if (props.items.length > 0) {
       return props.items.map(item => {
         if (item.expand === false) {
           return (
-            <div key={item.key} className="fileIcon">
+            <div key={item.name} className="fileIcon">
               <label
                 onClick={() => {
                   if (item.children.length !== 0) {
@@ -28,9 +33,9 @@ function FileUI(props) {
                 id="downlaod"
                 onClick={e => {
                   e.preventDefault();
-                  if(item.name){
-                   socket.emit('fileSelect', item.name);
-                   console.log(item.name);
+                  if (item.name) {
+                    console.log(item.name);
+                    socket.emit('fileSelect', item.name);
                   }
                 }}
               ></button>
@@ -39,7 +44,7 @@ function FileUI(props) {
         } else {
           item.expand = false;
           return (
-            <div key={item.key} className="fileIcon">
+            <div key={item.name} className="fileIcon">
               <b
                 onClick={() => {
                   treeSet(item);

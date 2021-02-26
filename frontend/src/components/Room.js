@@ -37,7 +37,7 @@ function Room() {
           onSetText={text => setRes({ dirName: text, fileTree: res.fileTree })}
         />
       )}
-      {res && <UploadForm fileTree={res.fileTree} dirID={dirID} />}
+      {res && <UploadForm fileTree={res.userFiles} dirID={dirID} />}
       {res && <UserInvite dirID={dirID} />}
     </>
   );

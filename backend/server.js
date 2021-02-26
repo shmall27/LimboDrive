@@ -4,19 +4,13 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const app = express();
-const httpServer = require('http').createServer(app)
+const httpServer = require('http').createServer(app);
 
 const Rooms = require('./models/Rooms');
 const Users = require('./models/Users');
 
-const port = 2000
+const port = 2000;
 httpServer.listen(port, () => console.log(`Server running on port ${port}`));
-
-const io = require('socket.io')(httpServer, {
-  cors: {
-    origin: "http://localhost:3000"
-  }
-})
 
 const connParams = {
   useNewUrlParser: true,
@@ -40,41 +34,102 @@ const DBUsers = user_db.model('DBUsers', Users);
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 
+const io = require('socket.io')(httpServer, {
+  cors: {
+    origin: 'http://localhost:3000'
+  }
+});
+
 //Socket.io Middleware
+let userSocketIDs = [];
+
 io.on('connection', socket => {
+  socket.on('userSocket', data => {
+    let userID = jwt.verify(data, 'tokenSecretGoesHere').id;
+    let found = false;
+    if (userSocketIDs.length > 0) {
+      for (let i = 0; i < userSocketIDs.length; i++) {
+        if (userSocketIDs[i].userID == userID) {
+          found = true;
+          if (userSocketIDs[i].socketID != socket.id) {
+            userSocketIDs[i].socketID = socket.id;
+          }
+          break;
+        }
+      }
+    }
+    if (!found) {
+      userSocketIDs.push({
+        userID,
+        socketID: socket.id
+      });
+    }
+  });
+
   socket.on('fileSelect', data => {
-    console.log(data)
-  })
-})
+    console.log(data);
+  });
+});
 
 //Express Middleware
 //Routes user file tree to mongoDB
-app.post('/upload', (req, res) => {
+app.post('/upload', async (req, res) => {
   const webToken = req.body.jwt;
   const dirID = req.body.dirID;
   if (!webToken) {
     res.status(401).send('Access Denied');
   } else {
     try {
-      jwt.verify(webToken, 'tokenSecretGoesHere');
+      const hostID = await jwt.verify(webToken, 'tokenSecretGoesHere').id;
+      const host = await DBUsers.findById(hostID).exec();
 
       let fileTreeObj = {
         name: req.body.fileTree[0].name,
         children: req.body.fileTree[0].children,
         key: req.body.fileTree[0].key
       };
-      DBRooms.findOneAndUpdate(
-        { _id: dirID },
-        { $push: { fileTree: fileTreeObj } },
-        (err, res) => {
-          if (err) {
-            console.log(err);
-          } else {
-            // console.log(res);
-          }
-        },
-        { useFindAndModify: false }
-      );
+      //Check to see if the user has already uploaded files before
+      const userHasUploaded = await DBRooms.findOne({
+        _id: dirID,
+        'userFiles.hostEmail': host.email
+      });
+
+      //If they have uploaded before, push their new upload to their previous fileTree
+      if (userHasUploaded != null) {
+        DBRooms.findOneAndUpdate(
+          {
+            _id: dirID,
+            'userFiles.hostEmail': host.email
+          },
+          { $push: { 'userFiles.$.fileTree': fileTreeObj } },
+          (err, res) => {
+            if (err) {
+              console.log(err);
+            } else {
+              // console.log(res);
+            }
+          },
+          { useFindAndModify: false }
+        );
+      } else {
+        //If they haven't uploaded before, create a new instance of their fileTree
+        DBRooms.findOneAndUpdate(
+          { _id: dirID },
+          {
+            $push: {
+              userFiles: { hostEmail: host.email, fileTree: fileTreeObj }
+            }
+          },
+          (err, res) => {
+            if (err) {
+              console.log(err);
+            } else {
+              // console.log(res);
+            }
+          },
+          { useFindAndModify: false }
+        );
+      }
     } catch (err) {
       res.status(400).send('Invalid Token');
     }
@@ -262,4 +317,3 @@ app.post('/signup', async (req, res) => {
     `Email: ${req.body.creds.email}, Password: ${req.body.creds.password}`
   );
 });
-
