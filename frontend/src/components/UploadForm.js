@@ -78,7 +78,6 @@ function UploadForm(props) {
         <div id="upload-console">
           {props.fileTree &&
             props.fileTree.map(userUpload => {
-              console.log(userUpload);
               return (
                 <div key={userUpload._id}>
                   <h3>{userUpload.hostEmail}</h3>
