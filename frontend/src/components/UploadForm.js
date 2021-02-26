@@ -43,7 +43,7 @@ function UploadForm(props) {
                         name,
                         children: r[name].fileTree,
                         expand: false,
-                        key: standardUploadFiles[i].webkitRelativePath
+                        path: standardUploadFiles[i].webkitRelativePath
                       });
                     }
                     return r[name];
@@ -55,7 +55,11 @@ function UploadForm(props) {
                 axios
                   .post('http://localhost:2000/upload', {
                     dirID: props.dirID,
-                    fileTree,
+                    fileTree: {
+                      name: fileTree[0].name,
+                      children: fileTree[0].children,
+                      path: fileTree[0].path
+                    },
                     jwt: JSON.parse(window.localStorage.getItem('jwt')).data
                   })
                   .then(
@@ -72,15 +76,16 @@ function UploadForm(props) {
         </form>
 
         <div id="upload-console">
-          {props.fileTree.map(userUpload => {
-            console.log(userUpload);
-            return (
-              <div key={userUpload._id}>
-                <h3>{userUpload.hostEmail}</h3>
-                <FileUI items={userUpload.fileTree} depth={0} />
-              </div>
-            );
-          })}
+          {props.fileTree &&
+            props.fileTree.map(userUpload => {
+              console.log(userUpload);
+              return (
+                <div key={userUpload._id}>
+                  <h3>{userUpload.hostEmail}</h3>
+                  <FileUI items={userUpload.fileTree} depth={0} />
+                </div>
+              );
+            })}
         </div>
       </>
     );

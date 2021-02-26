@@ -10,11 +10,11 @@ const RoomSchema = new mongoose.Schema({
         {
           name: String,
           children: Array,
-          key: String,
           expand: {
             type: Boolean,
             default: false
-          }
+          },
+          path: String
         }
       ]
     }

@@ -33,9 +33,14 @@ function FileUI(props) {
                 id="downlaod"
                 onClick={e => {
                   e.preventDefault();
-                  if (item.name) {
-                    console.log(item.name);
-                    socket.emit('fileSelect', item.name);
+                  if (item) {
+                    if (item.children.length > 0) {
+                      console.log(item.name);
+                      socket.emit('fileSelect', item.name);
+                    } else {
+                      console.log(item.path);
+                      socket.emit('fileSelect', item.path);
+                    }
                   }
                 }}
               ></button>

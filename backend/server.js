@@ -83,11 +83,12 @@ app.post('/upload', async (req, res) => {
       const hostID = await jwt.verify(webToken, 'tokenSecretGoesHere').id;
       const host = await DBUsers.findById(hostID).exec();
 
-      let fileTreeObj = {
-        name: req.body.fileTree[0].name,
-        children: req.body.fileTree[0].children,
-        key: req.body.fileTree[0].key
+      const fileTreeObj = {
+        name: req.body.fileTree.name,
+        children: req.body.fileTree.children,
+        path: req.body.fileTree.path
       };
+
       //Check to see if the user has already uploaded files before
       const userHasUploaded = await DBRooms.findOne({
         _id: dirID,
@@ -254,22 +255,28 @@ app.post('/invite-user', async (req, res) => {
   } else {
     try {
       jwt.verify(webToken, 'tokenSecretGoesHere');
-      let checkEmail = await DBUsers.findOne({ email: invitedUser });
-      DBRooms.findOneAndUpdate(
-        {
-          _id: dirID,
-          authUsers: jwt.verify(webToken, 'tokenSecretGoesHere').id
-        },
-        { $push: { authUsers: checkEmail._id } },
-        (err, res) => {
-          if (err) {
-            console.log(err);
-          } else {
-            // console.log(res);
-          }
-        },
-        { useFindAndModify: false }
-      );
+      const checkEmail = await DBUsers.findOne({ email: invitedUser });
+      const userAlreadyInvited = await DBRooms.findOne({
+        authUsers: checkEmail._id
+      });
+      console.log(checkEmail);
+      if (userAlreadyInvited == null && checkEmail != null) {
+        DBRooms.findOneAndUpdate(
+          {
+            _id: dirID,
+            authUsers: jwt.verify(webToken, 'tokenSecretGoesHere').id
+          },
+          { $push: { authUsers: checkEmail._id } },
+          (err, res) => {
+            if (err) {
+              console.log(err);
+            } else {
+              // console.log(res);
+            }
+          },
+          { useFindAndModify: false }
+        );
+      }
     } catch (err) {
       res.status(400).send('Invalid Token');
     }
