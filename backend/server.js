@@ -68,6 +68,7 @@ io.on('connection', socket => {
 
   socket.on('fileSelect', data => {
     console.log(data);
+    console.log(userSocketIDs);
   });
 });
 
@@ -82,11 +83,10 @@ app.post('/upload', async (req, res) => {
     try {
       const hostID = await jwt.verify(webToken, 'tokenSecretGoesHere').id;
       const host = await DBUsers.findById(hostID).exec();
-
       const fileTreeObj = {
         name: req.body.fileTree.name,
-        children: req.body.fileTree.children,
-        path: req.body.fileTree.path
+        path: req.body.fileTree.path,
+        children: req.body.fileTree.children
       };
 
       //Check to see if the user has already uploaded files before
@@ -118,7 +118,11 @@ app.post('/upload', async (req, res) => {
           { _id: dirID },
           {
             $push: {
-              userFiles: { hostEmail: host.email, fileTree: fileTreeObj }
+              userFiles: {
+                hostEmail: host.email,
+                hostID: host._id,
+                fileTree: fileTreeObj
+              }
             }
           },
           (err, res) => {

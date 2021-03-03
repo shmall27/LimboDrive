@@ -1,54 +1,87 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import axios from 'axios';
-import JSZip from 'jszip';
 import FileUI from './FileUI';
 
 function UploadForm(props) {
-  let fileBufferArr = [];
+  console.log(props);
+  let db;
+  useEffect(() => {
+    //IndexDB implementation
+    if (!window.indexedDB) {
+      console.log(
+        "Your browser doesn't support a stable version of IndexedDB. Such and such feature will not be available."
+      );
+    } else {
+      let request = indexedDB.open('virtualFS');
+
+      request.onupgradeneeded = e => {
+        db = e.target.result;
+        db.createObjectStore('file_tree', {
+          keyPath: 'name'
+        });
+      };
+
+      request.onerror = e => {
+        console.log('There was an error creating an indexedDB');
+      };
+
+      request.onsuccess = e => {
+        db = e.target.result;
+        const tx = db.transaction('file_tree', 'readonly');
+        const req = tx.objectStore('file_tree').openCursor();
+
+        req.onsuccess = e => {
+          const cursor = e.target.result;
+          if (cursor) {
+            console.log(cursor.value);
+            cursor.continue();
+          }
+        };
+      };
+    }
+  }, []);
+
   if (localStorage.length > 0) {
     return (
       <>
-        <form>
-          <input
-            type="file"
-            name="files"
-            id="standard-upload-files"
-            webkitdirectory="true"
-            mozdirectory="true"
-          />
-          <input
-            type="submit"
+        <div>
+          <button
             id="standard-upload"
-            onClick={e => {
-              let standardUploadFiles = document.getElementById(
-                'standard-upload-files'
-              ).files;
-              e.preventDefault();
+            onClick={async () => {
+              const dirHandle = await window.showDirectoryPicker();
+              const fileTree = await fileRecursion(dirHandle, '');
 
-              let fileTree = [];
-
-              let level = { fileTree };
-
-              console.log(standardUploadFiles);
-
-              for (let i = 0; i < standardUploadFiles.length; i++) {
-                console.log(standardUploadFiles[i]);
-                //Recreate the file tree
-                standardUploadFiles[i].webkitRelativePath
-                  .split('/')
-                  .reduce((r, name) => {
-                    if (!r[name]) {
-                      r[name] = { fileTree: [] };
-                      r.fileTree.push({
-                        name,
-                        children: r[name].fileTree,
-                        expand: false,
-                        path: standardUploadFiles[i].webkitRelativePath
-                      });
-                    }
-                    return r[name];
-                  }, level);
+              async function fileRecursion(folder, path) {
+                let miniTree = {
+                  name: folder.name,
+                  handle: folder,
+                  expand: false,
+                  children: [],
+                  path: path + '/' + String(folder.name)
+                };
+                for await (const entry of folder.values()) {
+                  if (entry.kind == 'directory') {
+                    miniTree['children'].push(
+                      await fileRecursion(entry, miniTree.path)
+                    );
+                  } else {
+                    miniTree['children'].push({
+                      name: entry.name,
+                      handle: entry,
+                      expand: false,
+                      children: [],
+                      path: miniTree.path + '/' + String(entry.name)
+                    });
+                  }
+                }
+                return miniTree;
               }
+
+              console.log(fileTree);
+              //Save file to indexDB
+              const rx = db.transaction('file_tree', 'readwrite');
+              rx.onerror = e => console.log(`Error: ${e.target.error}`);
+              rx.objectStore('file_tree').add(fileTree);
 
               //Send files to express server
               if (localStorage.length > 0) {
@@ -56,9 +89,9 @@ function UploadForm(props) {
                   .post('http://localhost:2000/upload', {
                     dirID: props.dirID,
                     fileTree: {
-                      name: fileTree[0].name,
-                      children: fileTree[0].children,
-                      path: fileTree[0].path
+                      name: fileTree.name,
+                      path: fileTree.path,
+                      children: fileTree.children
                     },
                     jwt: JSON.parse(window.localStorage.getItem('jwt')).data
                   })
@@ -72,8 +105,10 @@ function UploadForm(props) {
                   );
               } else console.log('Please sign in.');
             }}
-          />
-        </form>
+          >
+            Upload Folders
+          </button>
+        </div>
 
         <div id="upload-console">
           {props.fileTree &&
@@ -81,7 +116,11 @@ function UploadForm(props) {
               return (
                 <div key={userUpload._id}>
                   <h3>{userUpload.hostEmail}</h3>
-                  <FileUI items={userUpload.fileTree} depth={0} />
+                  <FileUI
+                    items={userUpload.fileTree}
+                    host={userUpload.hostID}
+                    depth={0}
+                  />
                 </div>
               );
             })}

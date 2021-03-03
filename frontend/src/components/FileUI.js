@@ -34,13 +34,11 @@ function FileUI(props) {
                 onClick={e => {
                   e.preventDefault();
                   if (item) {
-                    if (item.children.length > 0) {
-                      console.log(item.name);
-                      socket.emit('fileSelect', item.name);
-                    } else {
-                      console.log(item.path);
-                      socket.emit('fileSelect', item.path);
-                    }
+                    console.log(props.host);
+                    socket.emit('fileSelect', {
+                      path: item.path,
+                      host: props.host
+                    });
                   }
                 }}
               ></button>
