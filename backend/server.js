@@ -53,6 +53,7 @@ io.on('connection', socket => {
           found = true;
           if (userSocketIDs[i].socketID != socket.id) {
             userSocketIDs[i].socketID = socket.id;
+            userSocketIDs[i].disconnected = false;
           }
           break;
         }
@@ -61,14 +62,42 @@ io.on('connection', socket => {
     if (!found) {
       userSocketIDs.push({
         userID,
-        socketID: socket.id
+        socketID: socket.id,
+        disconnected: false
       });
+    }
+    // console.log(userSocketIDs);
+  });
+
+  socket.on('disconnect', reason => {
+    for (let i = 0; i < userSocketIDs.length; i++) {
+      if (userSocketIDs[i].socketID == socket.id) {
+        userSocketIDs[i].disconnected = true;
+        setTimeout(async () => {
+          if (userSocketIDs[i].disconnected == true) {
+            console.log('disconnected');
+            await DBRooms.update(
+              {},
+              { $pull: { userFiles: { hostID: userSocketIDs[i].userID } } }
+            );
+            userSocketIDs.splice(i, 1);
+          }
+        }, 5000);
+      }
     }
   });
 
   socket.on('fileSelect', data => {
-    console.log(data);
-    console.log(userSocketIDs);
+    let hostSocket;
+    let reqSocket = socket.id;
+    userSocketIDs.map(idPairs => {
+      if (idPairs.userID == data.host) {
+        hostSocket = idPairs.socketID;
+      }
+    });
+    console.log(`Host: ${hostSocket}  Requester: ${reqSocket}`);
+    if (hostSocket != reqSocket) {
+    }
   });
 });
 

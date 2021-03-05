@@ -37,7 +37,8 @@ function FileUI(props) {
                     console.log(props.host);
                     socket.emit('fileSelect', {
                       path: item.path,
-                      host: props.host
+                      host: props.host,
+                      dirID: props.dirID
                     });
                   }
                 }}

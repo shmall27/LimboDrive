@@ -3,7 +3,6 @@ import axios from 'axios';
 import FileUI from './FileUI';
 
 function UploadForm(props) {
-  console.log(props);
   let db;
   useEffect(() => {
     //IndexDB implementation
@@ -113,16 +112,21 @@ function UploadForm(props) {
         <div id="upload-console">
           {props.fileTree &&
             props.fileTree.map(userUpload => {
-              return (
-                <div key={userUpload._id}>
-                  <h3>{userUpload.hostEmail}</h3>
-                  <FileUI
-                    items={userUpload.fileTree}
-                    host={userUpload.hostID}
-                    depth={0}
-                  />
-                </div>
-              );
+              if (userUpload.fileTree.length > 0) {
+                return (
+                  <div key={userUpload._id}>
+                    <h3>{userUpload.hostEmail}</h3>
+                    <FileUI
+                      items={userUpload.fileTree}
+                      dirID={props.dirID}
+                      host={userUpload.hostID}
+                      depth={0}
+                    />
+                  </div>
+                );
+              } else {
+                return <h2>No files uploaded to this drive.</h2>;
+              }
             })}
         </div>
       </>
