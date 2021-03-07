@@ -66,7 +66,7 @@ io.on('connection', socket => {
         disconnected: false
       });
     }
-    // console.log(userSocketIDs);
+    console.log(userSocketIDs);
   });
 
   socket.on('disconnect', reason => {
@@ -95,8 +95,8 @@ io.on('connection', socket => {
         hostSocket = idPairs.socketID;
       }
     });
-    console.log(`Host: ${hostSocket}  Requester: ${reqSocket}`);
     if (hostSocket != reqSocket) {
+      io.to(hostSocket).emit('selectedFile', data);
     }
   });
 });

@@ -2,9 +2,49 @@ import React, { useEffect } from 'react';
 import axios from 'axios';
 import FileUI from './FileUI';
 
+const io = require('socket.io-client');
+const socket = io('http://localhost:2000');
+
+function treeRecursion(tree, search) {
+  for (const item of tree) {
+    if (item.path == search) {
+      return item.handle;
+    }
+    if (!item.children) continue;
+    const result = treeRecursion(item.children, search);
+    if (result) return result;
+  }
+  return null;
+}
+
 function UploadForm(props) {
+  let indexedDBArr = [];
   let db;
+
   useEffect(() => {
+    socket.emit(
+      'userSocket',
+      JSON.parse(window.localStorage.getItem('jwt')).data
+    );
+
+    socket.on('selectedFile', async data => {
+      const reqFile = treeRecursion(indexedDBArr, data.path);
+      // const status = await reqFile.queryPermission({ mode: 'read' });
+      console.log(reqFile);
+      await reqFile.requestPermission().catch(function(error) {
+        console.error(error);
+      });
+    });
+
+    const prevTime = Date.parse(localStorage.getItem('disTime'));
+    const curTime = new Date();
+    if (curTime - prevTime > 5000) {
+      window.indexedDB.deleteDatabase('virtualFS');
+    }
+
+    window.onbeforeunload = () => {
+      localStorage.setItem('disTime', new Date());
+    };
     //IndexDB implementation
     if (!window.indexedDB) {
       console.log(
@@ -32,6 +72,7 @@ function UploadForm(props) {
         req.onsuccess = e => {
           const cursor = e.target.result;
           if (cursor) {
+            indexedDBArr.push(cursor.value);
             console.log(cursor.value);
             cursor.continue();
           }
@@ -111,6 +152,7 @@ function UploadForm(props) {
 
         <div id="upload-console">
           {props.fileTree &&
+            socket &&
             props.fileTree.map(userUpload => {
               if (userUpload.fileTree.length > 0) {
                 return (
@@ -121,6 +163,7 @@ function UploadForm(props) {
                       dirID={props.dirID}
                       host={userUpload.hostID}
                       depth={0}
+                      socket={socket}
                     />
                   </div>
                 );
