@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 function FileUI(props) {
   const [miniTree, treeSet] = useState();
   if (typeof props.items !== 'undefined') {
     if (props.items.length > 0) {
-      return props.items.map(item => {
+      return props.items.map((item) => {
         if (item.expand === false) {
           return (
-            <div key={item.name} className="fileIcon">
+            <div key={item.name} className='fileIcon'>
               <label
                 onClick={() => {
                   if (item.children.length !== 0) {
@@ -19,14 +19,14 @@ function FileUI(props) {
                 {item.name}
               </label>
               <button
-                id="downlaod"
-                onClick={e => {
+                id='downlaod'
+                onClick={(e) => {
                   e.preventDefault();
                   if (item) {
                     props.socket.emit('fileSelect', {
                       path: item.path,
                       host: props.host,
-                      dirID: props.dirID
+                      dirID: props.dirID,
                     });
                   }
                 }}
@@ -36,7 +36,7 @@ function FileUI(props) {
         } else {
           item.expand = false;
           return (
-            <div key={item.name} className="fileIcon">
+            <div key={item.name} className='fileIcon'>
               <b
                 onClick={() => {
                   treeSet(item);
