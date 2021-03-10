@@ -8,21 +8,32 @@ import UserInvite from './UserInvite';
 
 import './styles.css';
 
+const io = require('socket.io-client');
+const socket = io('http://localhost:2000');
+
 function Room() {
-  const [res, setRes] = useState(null);
+  const [dirName, setDirName] = useState(null);
+  const [userFiles, setUserFiles] = useState(null);
   const { dirID } = useParams();
+
+  socket.on('Update', (data) => {
+    setDirName(data.dirName);
+    setUserFiles(data.userFiles);
+  });
+
   useEffect(() => {
     if (localStorage.length > 0) {
       axios
         .post('http://localhost:2000/rooms-files/', {
           jwt: JSON.parse(window.localStorage.getItem('jwt')).data,
-          dirID
+          dirID,
         })
         .then(
-          response => {
-            setRes(response.data);
+          (response) => {
+            setDirName(response.data.dirName);
+            setUserFiles(response.data.userFiles);
           },
-          error => {
+          (error) => {
             console.log(error);
           }
         );
@@ -30,15 +41,17 @@ function Room() {
   }, []);
   return (
     <>
-      {res && (
+      {dirName && userFiles && (
         <DirName
           dirID={dirID}
-          text={res.dirName}
-          onSetText={text => setRes({ dirName: text, fileTree: res.fileTree })}
+          text={dirName}
+          onSetText={(text) => setDirName(text)}
         />
       )}
-      {res && <UploadForm fileTree={res.userFiles} dirID={dirID} />}
-      {res && <UserInvite dirID={dirID} />}
+      {dirName && userFiles && (
+        <UploadForm fileTree={userFiles} dirID={dirID} socket={socket} />
+      )}
+      {dirName && userFiles && <UserInvite dirID={dirID} />}
     </>
   );
 }

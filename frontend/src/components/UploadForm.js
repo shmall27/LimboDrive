@@ -3,8 +3,6 @@ import React, { useEffect } from 'react';
 import axios from 'axios';
 import FileUI from './FileUI';
 
-const io = require('socket.io-client');
-const socket = io('http://localhost:2000');
 const packetSize = 16 * 1024;
 let initReqFile;
 
@@ -20,67 +18,103 @@ function treeRecursion(tree, search) {
   return null;
 }
 
-async function hostUploadFile(reqFile, reqSocket, sliceNum, host) {
-  const file = await reqFile.getFile();
-  let fullFile = await file.arrayBuffer();
-  fullFile = new Uint8Array(fullFile);
-  const percentComplete = ((sliceNum * packetSize) / fullFile.byteLength) * 100;
-  console.log(percentComplete);
-
-  if ((sliceNum - 1) * packetSize <= fullFile.byteLength) {
-    const packet = fullFile.slice(
-      (sliceNum - 1) * packetSize,
-      sliceNum * packetSize
-    );
-    socket.emit('toServerPacket', {
-      packet,
-      cone: reqSocket,
-      host,
-      sliceNum,
-    });
-  } else {
-    socket.emit('toServerUploadEnd', reqSocket);
-    initReqFile = null;
-    console.log('Upload Complete!');
-  }
-}
+let db;
 
 function UploadForm(props) {
+  async function hostUploadFile(reqFile, reqSocket, sliceNum, host) {
+    const file = await reqFile.getFile();
+    let fullFile = await file.arrayBuffer();
+    fullFile = new Uint8Array(fullFile);
+    const percentComplete =
+      ((sliceNum * packetSize) / fullFile.byteLength) * 100;
+    console.log(percentComplete);
+
+    if ((sliceNum - 1) * packetSize <= fullFile.byteLength) {
+      const packet = fullFile.slice(
+        (sliceNum - 1) * packetSize,
+        sliceNum * packetSize
+      );
+      props.socket.emit('toServerPacket', {
+        packet,
+        cone: reqSocket,
+        host,
+        sliceNum,
+      });
+    } else {
+      props.socket.emit('toServerUploadEnd', reqSocket);
+      initReqFile = null;
+      console.log('Upload Complete!');
+    }
+  }
+
   let indexedDBArr = [];
-  // let fileBuffer = [];
-  let db;
+
+  //IndexDB implementation
+  if (!window.indexedDB) {
+    console.log(
+      "Your browser doesn't support a stable version of IndexedDB. Such and such feature will not be available."
+    );
+  } else {
+    let request = indexedDB.open('virtualFS');
+
+    request.onupgradeneeded = (e) => {
+      db = e.target.result;
+      db.createObjectStore('file_tree', {
+        keyPath: 'name',
+      });
+    };
+
+    request.onerror = (e) => {
+      console.log('There was an error creating an indexedDB');
+    };
+
+    request.onsuccess = (e) => {
+      db = e.target.result;
+      const tx = db.transaction('file_tree', 'readonly');
+      const req = tx.objectStore('file_tree');
+      const cursor = req.openCursor();
+
+      cursor.onsuccess = (e) => {
+        const cursor = e.target.result;
+        if (cursor) {
+          indexedDBArr.push(cursor.value);
+          console.log(cursor.value);
+          cursor.continue();
+        }
+      };
+    };
+  }
 
   useEffect(() => {
-    socket.emit(
-      'userSocket',
-      JSON.parse(window.localStorage.getItem('jwt')).data
-    );
+    props.socket.emit('userSocket', {
+      userID: JSON.parse(window.localStorage.getItem('jwt')).data,
+      dirID: props.dirID,
+    });
 
-    socket.on('selectedFile', async (data) => {
-      if (!initReqFile) {
-        console.log('reqFile was undefined');
-        initReqFile = treeRecursion(indexedDBArr, data.path);
-      }
-      const status = await initReqFile.queryPermission({ mode: 'read' });
-      if (status != 'granted') {
-        await initReqFile.requestPermission().catch(function (error) {
-          console.error(error);
-        });
+    props.socket.on('selectedFile', async (data) => {
+      if (indexedDBArr.length > 0) {
+        if (!initReqFile) {
+          initReqFile = treeRecursion(indexedDBArr, data.path);
+        }
+        const status = await initReqFile.queryPermission({ mode: 'read' });
+        if (status != 'granted') {
+          await initReqFile.requestPermission().catch(function (error) {
+            console.error(error);
+          });
+        } else {
+          hostUploadFile(initReqFile, data.cone, data.sliceNum, data.host);
+        }
       } else {
-        hostUploadFile(initReqFile, data.cone, data.sliceNum, data.host);
-        // let fullFile = await reqFile.getFile();
-        // fullFile = await fullFile.arrayBuffer();
-        // console.log(fullFile);
-        // console.log(fullFile.byteLength);
+        console.log('This file is not accessible');
       }
     });
 
-    socket.on('toConePacket', (data) => {
+    props.socket.on('toConePacket', (data) => {
       let nextSliceReq = data.sliceNum + 1;
       //Fix this...
       // fileBuffer.push(data.packet);
       console.log(data.packet);
-      socket.emit('toServerRequestDetails', {
+      props.socket.emit('toServerRequestDetails', {
         cone: data.cone,
         host: data.host,
         sliceNum: nextSliceReq,
@@ -89,48 +123,15 @@ function UploadForm(props) {
 
     const prevTime = Date.parse(localStorage.getItem('disTime'));
     const curTime = new Date();
-    if (curTime - prevTime > 10000) {
+    if (curTime - prevTime > 5000) {
       window.indexedDB.deleteDatabase('virtualFS');
-    }
-
-    window.onbeforeunload = () => {
-      localStorage.setItem('disTime', new Date());
-    };
-    //IndexDB implementation
-    if (!window.indexedDB) {
-      console.log(
-        "Your browser doesn't support a stable version of IndexedDB. Such and such feature will not be available."
-      );
-    } else {
-      let request = indexedDB.open('virtualFS');
-
-      request.onupgradeneeded = (e) => {
-        db = e.target.result;
-        db.createObjectStore('file_tree', {
-          keyPath: 'name',
-        });
-      };
-
-      request.onerror = (e) => {
-        console.log('There was an error creating an indexedDB');
-      };
-
-      request.onsuccess = (e) => {
-        db = e.target.result;
-        const tx = db.transaction('file_tree', 'readonly');
-        const req = tx.objectStore('file_tree').openCursor();
-
-        req.onsuccess = (e) => {
-          const cursor = e.target.result;
-          if (cursor) {
-            indexedDBArr.push(cursor.value);
-            console.log(cursor.value);
-            cursor.continue();
-          }
-        };
-      };
+      console.log('im running');
     }
   }, []);
+
+  window.onbeforeunload = () => {
+    localStorage.setItem('disTime', new Date());
+  };
 
   if (localStorage.length > 0) {
     return (
@@ -168,8 +169,8 @@ function UploadForm(props) {
                 return miniTree;
               }
 
-              console.log(fileTree);
               //Save file to indexDB
+              console.log(db);
               const rx = db.transaction('file_tree', 'readwrite');
               rx.onerror = (e) => console.log(`Error: ${e.target.error}`);
               rx.objectStore('file_tree').add(fileTree);
@@ -203,7 +204,7 @@ function UploadForm(props) {
 
         <div id='upload-console'>
           {props.fileTree &&
-            socket &&
+            props.socket &&
             props.fileTree.map((userUpload) => {
               if (userUpload.fileTree.length > 0) {
                 return (
@@ -214,7 +215,7 @@ function UploadForm(props) {
                       dirID={props.dirID}
                       host={userUpload.hostID}
                       depth={0}
-                      socket={socket}
+                      socket={props.socket}
                     />
                   </div>
                 );

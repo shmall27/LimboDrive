@@ -45,7 +45,7 @@ let userSocketIDs = [];
 
 io.on('connection', (socket) => {
   socket.on('userSocket', (data) => {
-    let userID = jwt.verify(data, 'tokenSecretGoesHere').id;
+    let userID = jwt.verify(data.userID, 'tokenSecretGoesHere').id;
     let found = false;
     if (userSocketIDs.length > 0) {
       for (let i = 0; i < userSocketIDs.length; i++) {
@@ -55,6 +55,9 @@ io.on('connection', (socket) => {
             userSocketIDs[i].socketID = socket.id;
             userSocketIDs[i].disconnected = false;
           }
+          if (userSocketIDs[i].dirID != data.dirID) {
+            userSocketIDs[i].dirID = data.dirID;
+          }
           break;
         }
       }
@@ -63,6 +66,7 @@ io.on('connection', (socket) => {
       userSocketIDs.push({
         userID,
         socketID: socket.id,
+        dirID: data.dirID,
         disconnected: false,
       });
     }
@@ -122,6 +126,28 @@ io.on('connection', (socket) => {
       sliceNum: data.sliceNum,
     });
   });
+});
+
+//Emits changes so rooms don't need to refresh
+DBRooms.watch().on('change', async (change) => {
+  const updatedDocID = change.documentKey._id;
+  const updatedDoc = await DBRooms.findById(updatedDocID).exec();
+  console.log(updatedDoc);
+  for (const user of updatedDoc.authUsers) {
+    for (let i = 0; i < userSocketIDs.length; i++) {
+      if (
+        userSocketIDs[i].userID == user &&
+        userSocketIDs[i].dirID == updatedDocID
+      ) {
+        found = true;
+        io.to(userSocketIDs[i].socketID).emit('Update', {
+          dirName: updatedDoc.dirName,
+          userFiles: updatedDoc.userFiles,
+        });
+        break;
+      }
+    }
+  }
 });
 
 //Express Middleware
@@ -187,6 +213,21 @@ app.post('/upload', async (req, res) => {
           { useFindAndModify: false }
         );
       }
+    } catch (err) {
+      res.status(400).send('Invalid Token');
+    }
+  }
+});
+
+app.post('/delete-tree', async (req, res) => {
+  const webToken = req.body.jwt;
+  if (!webToken) {
+    res.status(401).send('Access Denied');
+  } else {
+    try {
+      const hostID = jwt.verify(webToken, 'tokenSecretGoesHere').id;
+      console.log(hostID);
+      await DBRooms.update({}, { $pull: { userFiles: { hostID } } });
     } catch (err) {
       res.status(400).send('Invalid Token');
     }
