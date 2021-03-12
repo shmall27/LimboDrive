@@ -4,25 +4,25 @@ import axios from 'axios';
 import FileUI from './FileUI';
 
 const packetSize = 16 * 1024;
-let initReqFile;
+let selectedFile;
+let db;
+let indexedDBArr = [];
+let queue = [];
 
-function treeRecursion(tree, search) {
+function treeSearch(tree, search) {
   for (const item of tree) {
     if (item.path == search) {
       return item.handle;
     }
     if (!item.children) continue;
-    const result = treeRecursion(item.children, search);
+    const result = treeSearch(item.children, search);
     if (result) return result;
   }
   return null;
 }
 
-let db;
-let indexedDBArr = [];
-
 function UploadForm(props) {
-  async function hostUploadFile(reqFile, reqSocket, sliceNum, host) {
+  async function hostUploadFile(reqFile, reqSocket, sliceNum, host, path) {
     const file = await reqFile.getFile();
     let fullFile = await file.arrayBuffer();
     fullFile = new Uint8Array(fullFile);
@@ -37,19 +37,25 @@ function UploadForm(props) {
       );
       props.socket.emit('toServerPacket', {
         packet,
+        path,
         cone: reqSocket,
         host,
         sliceNum
       });
     } else {
       props.socket.emit('toServerUploadEnd', reqSocket);
-      initReqFile = null;
+      for (let i = 0; i < queue.length; i++) {
+        if (queue[i].handle == reqSocket) {
+          queue.splice(i, 1);
+        }
+      }
       console.log('Upload Complete!');
     }
   }
 
-  useEffect(() => {
+  useEffect(async () => {
     //Save file to indexDB
+
     let request = indexedDB.open('virtualFS');
 
     request.onupgradeneeded = e => {
@@ -78,6 +84,22 @@ function UploadForm(props) {
           console.log(cursor.value);
           cursor.continue();
         }
+        //Delete non-matching DBs
+        // if (props.fileTree.length != indexedDBArr.length) {
+        //   console.log('Deleted');
+        //   axios
+        //     .post('http://localhost:2000/delete-tree', {
+        //       jwt: JSON.parse(window.localStorage.getItem('jwt')).data
+        //     })
+        //     .then(
+        //       response => {
+        //         console.log(response);
+        //       },
+        //       error => {
+        //         console.log(error);
+        //       }
+        //     );
+        // }
       };
     };
 
@@ -87,20 +109,42 @@ function UploadForm(props) {
     });
 
     props.socket.on('selectedFile', async data => {
+      let selectedFile = null;
       if (indexedDBArr.length > 0) {
-        if (!initReqFile) {
-          initReqFile = treeRecursion(indexedDBArr, data.path);
+        //initReqFile is the handle of the file that has been requested
+        let found = false;
+        if (queue.length > 0) {
+          for (let i = 0; i < queue.length; i++) {
+            if (queue[i].path == data.path) {
+              found = true;
+              selectedFile = queue[i].handle;
+              break;
+            }
+          }
         }
-        const status = await initReqFile.queryPermission({ mode: 'read' });
+        if (!found) {
+          selectedFile = treeSearch(indexedDBArr, data.path);
+          queue.push({
+            path: data.path,
+            handle: selectedFile
+          });
+        }
+        const status = await selectedFile.queryPermission({ mode: 'read' });
         if (status != 'granted') {
-          await initReqFile.requestPermission().catch(function(error) {
+          await selectedFile.requestPermission().catch(function(error) {
             console.error(error);
           });
         } else {
-          hostUploadFile(initReqFile, data.cone, data.sliceNum, data.host);
+          hostUploadFile(
+            selectedFile,
+            data.cone,
+            data.sliceNum,
+            data.host,
+            data.path
+          );
         }
       } else {
-        console.log('This file is not accessible');
+        console.log('This file is not in indexedDB');
       }
     });
 
@@ -110,6 +154,7 @@ function UploadForm(props) {
       console.log(data.packet);
       props.socket.emit('toServerRequestDetails', {
         cone: data.cone,
+        path: data.path,
         host: data.host,
         sliceNum: nextSliceReq
       });
