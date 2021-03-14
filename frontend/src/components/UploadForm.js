@@ -54,8 +54,7 @@ function UploadForm(props) {
   }
 
   useEffect(async () => {
-    //Save file to indexDB
-
+    //Save file to indexedDB
     let request = indexedDB.open('virtualFS');
 
     request.onupgradeneeded = e => {
@@ -70,7 +69,6 @@ function UploadForm(props) {
     };
 
     request.onsuccess = e => {
-      indexedDBArr = [];
       db = e.target.result;
 
       const tx = db.transaction('file_tree', 'readonly');
@@ -79,6 +77,7 @@ function UploadForm(props) {
 
       cursor.onsuccess = e => {
         const cursor = e.target.result;
+        console.log(cursor);
         if (cursor) {
           indexedDBArr.push(cursor.value);
           console.log(cursor.value);
@@ -164,7 +163,7 @@ function UploadForm(props) {
     const curTime = new Date();
     if (curTime - prevTime > 5000) {
       window.indexedDB.deleteDatabase('virtualFS');
-      console.log('im running');
+      console.log('Delete database!');
     }
   }, []);
 
@@ -249,6 +248,7 @@ function UploadForm(props) {
                   <div key={userUpload._id}>
                     <h3>{userUpload.hostEmail}</h3>
                     <FileUI
+                      hostEmail={userUpload.hostEmail}
                       items={userUpload.fileTree}
                       dirID={props.dirID}
                       host={userUpload.hostID}

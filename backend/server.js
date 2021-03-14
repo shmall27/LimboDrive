@@ -6,6 +6,8 @@ const jwt = require('jsonwebtoken');
 const app = express();
 const httpServer = require('http').createServer(app);
 
+require('dotenv').config();
+
 const Rooms = require('./models/Rooms');
 const Users = require('./models/Users');
 
@@ -18,12 +20,12 @@ const connParams = {
 };
 
 const temp_db = mongoose.createConnection(
-  'mongodb+srv://Shmall27:xUZ3r0Oo1x@limbodrive.m8zlx.mongodb.net/TempData?retryWrites=true&w=majority',
+  String(process.env.TEMP_DB_STRING),
   connParams
 );
 
 const user_db = mongoose.createConnection(
-  'mongodb+srv://Shmall27:xUZ3r0Oo1x@limbodrive.m8zlx.mongodb.net/UserData?retryWrites=true&w=majority',
+  String(process.env.USER_DB_STRING),
   connParams
 );
 
@@ -45,7 +47,7 @@ let userSocketIDs = [];
 
 io.on('connection', socket => {
   socket.on('userSocket', data => {
-    let userID = jwt.verify(data.userID, 'tokenSecretGoesHere').id;
+    let userID = jwt.verify(data.userID, process.env.JWT_TOKEN_SECRET).id;
     let found = false;
     if (userSocketIDs.length > 0) {
       for (let i = 0; i < userSocketIDs.length; i++) {
@@ -160,7 +162,8 @@ app.post('/upload', async (req, res) => {
     res.status(401).send('Access Denied');
   } else {
     try {
-      const hostID = await jwt.verify(webToken, 'tokenSecretGoesHere').id;
+      const hostID = await jwt.verify(webToken, process.env.JWT_TOKEN_SECRET)
+        .id;
       const host = await DBUsers.findById(hostID).exec();
       const fileTreeObj = {
         name: req.body.fileTree.name,
@@ -227,10 +230,41 @@ app.post('/delete-tree', async (req, res) => {
     res.status(401).send('Access Denied');
   } else {
     try {
-      const hostID = jwt.verify(webToken, 'tokenSecretGoesHere').id;
+      const hostID = jwt.verify(webToken, process.env.JWT_TOKEN_SECRET).id;
       console.log(hostID);
       await DBRooms.update({}, { $pull: { userFiles: { hostID } } });
     } catch (err) {
+      res.status(400).send('Invalid Token');
+    }
+  }
+});
+
+app.post('/delete-folder', async (req, res) => {
+  const webToken = req.body.jwt;
+  const deletedFolder = req.body.path;
+  const dirID = req.body.dirID;
+  if (!webToken) {
+    res.status(401).send('Access Denied');
+  } else {
+    try {
+      const hostID = jwt.verify(webToken, process.env.JWT_TOKEN_SECRET).id;
+      DBRooms.findOneAndUpdate(
+        {
+          _id: dirID,
+          'userFiles.hostID': hostID
+        },
+        { $pull: { 'userFiles.$.fileTree': { path: deletedFolder } } },
+        (err, res) => {
+          if (err) {
+            console.log(err);
+          } else {
+            console.log(res);
+          }
+        },
+        { useFindAndModify: false }
+      );
+    } catch (err) {
+      console.log(err);
       res.status(400).send('Invalid Token');
     }
   }
@@ -244,7 +278,7 @@ app.post('/rooms-files', (req, res) => {
     res.status(401).send('Access Denied');
   } else {
     try {
-      jwt.verify(webToken, 'tokenSecretGoesHere');
+      jwt.verify(webToken, process.env.JWT_TOKEN_SECRET);
       DBRooms.find({ _id: dirID }, function(err, result) {
         if (err) {
           console.log(err);
@@ -267,7 +301,7 @@ app.post('/rooms', async (req, res) => {
   } else {
     try {
       const userDocs = await DBRooms.find({
-        authUsers: `${jwt.verify(webToken, 'tokenSecretGoesHere').id}`
+        authUsers: `${jwt.verify(webToken, process.env.JWT_TOKEN_SECRET).id}`
       }).exec();
       for (let i = 0; i < userDocs.length; i++) {
         dirList.push([userDocs[i].dirName, userDocs[i]._id]);
@@ -286,9 +320,9 @@ app.post('/room-create', async (req, res) => {
     res.status(401).send('Access Denied!');
   } else {
     try {
-      jwt.verify(webToken, 'tokenSecretGoesHere');
+      jwt.verify(webToken, process.env.JWT_TOKEN_SECRET);
       new DBRooms({
-        authUsers: jwt.verify(webToken, 'tokenSecretGoesHere').id,
+        authUsers: jwt.verify(webToken, process.env.JWT_TOKEN_SECRET).id,
         dirName: 'untitled'
       }).save(err => {
         console.log(err);
@@ -306,7 +340,7 @@ app.post('/room-select', (req, res) => {
     res.status(401).send('Access Denied!');
   } else {
     try {
-      jwt.verify(webToken, 'tokenSecretGoesHere');
+      jwt.verify(webToken, process.env.JWT_TOKEN_SECRET);
       res.send('Authenticated');
     } catch (err) {
       res.status(400).send('Invalid Token');
@@ -322,11 +356,11 @@ app.post('/update-name', (req, res) => {
     res.status(401).send('Access Denied!');
   } else {
     try {
-      jwt.verify(webToken, 'tokenSecretGoesHere');
+      jwt.verify(webToken, process.env.JWT_TOKEN_SECRET);
       DBRooms.findOneAndUpdate(
         {
           _id: dirID,
-          authUsers: jwt.verify(webToken, 'tokenSecretGoesHere').id
+          authUsers: jwt.verify(webToken, process.env.JWT_TOKEN_SECRET).id
         },
         { dirName: dirName },
         (err, res) => {
@@ -353,17 +387,16 @@ app.post('/invite-user', async (req, res) => {
     res.status(401).send('Access Denied!');
   } else {
     try {
-      jwt.verify(webToken, 'tokenSecretGoesHere');
+      const userID = jwt.verify(webToken, process.env.JWT_TOKEN_SECRET).id;
       const checkEmail = await DBUsers.findOne({ email: invitedUser });
       const userAlreadyInvited = await DBRooms.findOne({
         authUsers: checkEmail._id
       });
-      console.log(checkEmail);
       if (userAlreadyInvited == null && checkEmail != null) {
         DBRooms.findOneAndUpdate(
           {
             _id: dirID,
-            authUsers: jwt.verify(webToken, 'tokenSecretGoesHere').id
+            authUsers: userID
           },
           { $push: { authUsers: checkEmail._id } },
           (err, res) => {
@@ -392,7 +425,10 @@ app.post('/login', async (req, res) => {
     );
     if (validatePassword) {
       //User is valid at this point
-      const webToken = jwt.sign({ id: userExists._id }, 'tokenSecretGoesHere');
+      const webToken = jwt.sign(
+        { id: userExists._id },
+        process.env.JWT_TOKEN_SECRET
+      );
       res.header('web-token', webToken).send(webToken);
       console.log('Signed in!');
     } else {
@@ -416,8 +452,15 @@ app.post('/signup', async (req, res) => {
     });
 
     dbSignUp.save(err => {
-      if (err) return handleError(err);
+      if (err) {
+        return handleError(err);
+      }
     });
+    const webToken = jwt.sign(
+      { id: dbSignUp._id },
+      process.env.JWT_TOKEN_SECRET
+    );
+    res.header('web-token', webToken).send(webToken);
   }
   console.log(
     `Email: ${req.body.creds.email}, Password: ${req.body.creds.password}`
