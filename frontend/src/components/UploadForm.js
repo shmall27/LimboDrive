@@ -70,17 +70,13 @@ function UploadForm(props) {
 
     request.onsuccess = e => {
       db = e.target.result;
-
       const tx = db.transaction('file_tree', 'readonly');
       const req = tx.objectStore('file_tree');
       const cursor = req.openCursor();
-
       cursor.onsuccess = e => {
         const cursor = e.target.result;
-        console.log(cursor);
         if (cursor) {
           indexedDBArr.push(cursor.value);
-          console.log(cursor.value);
           cursor.continue();
         }
         //Delete non-matching DBs
@@ -258,7 +254,7 @@ function UploadForm(props) {
                   </div>
                 );
               } else {
-                return <h2>No files uploaded to this drive.</h2>;
+                return null;
               }
             })}
         </div>
