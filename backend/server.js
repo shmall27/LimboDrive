@@ -112,13 +112,20 @@ io.on('connection', socket => {
   });
 
   socket.on('toServerPacket', data => {
-    io.to(data.cone).emit('toConePacket', {
-      packet: data.packet,
-      cone: data.cone,
-      path: data.path,
-      host: data.host,
-      sliceNum: data.sliceNum
-    });
+    if (!data.msg) {
+      io.to(data.cone).emit('toConePacket', {
+        packet: data.packet,
+        cone: data.cone,
+        path: data.path,
+        host: data.host,
+        sliceNum: data.sliceNum
+      });
+    } else {
+      io.to(data.cone).emit('toConePacket', {
+        msg: data.msg,
+        path: data.path
+      });
+    }
   });
 
   socket.on('toServerRequestDetails', data => {

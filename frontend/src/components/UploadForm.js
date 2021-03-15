@@ -4,10 +4,10 @@ import axios from 'axios';
 import FileUI from './FileUI';
 
 const packetSize = 16 * 1024;
-let selectedFile;
 let db;
 let indexedDBArr = [];
 let queue = [];
+let bufferQueue = [];
 
 function treeSearch(tree, search) {
   for (const item of tree) {
@@ -43,7 +43,12 @@ function UploadForm(props) {
         sliceNum
       });
     } else {
-      props.socket.emit('toServerUploadEnd', reqSocket);
+      props.socket.emit('toServerPacket', {
+        cone: reqSocket,
+        path,
+        msg: 'done'
+      });
+
       for (let i = 0; i < queue.length; i++) {
         if (queue[i].handle == reqSocket) {
           queue.splice(i, 1);
@@ -144,15 +149,49 @@ function UploadForm(props) {
     });
 
     props.socket.on('toConePacket', data => {
-      let nextSliceReq = data.sliceNum + 1;
-      //Combine buffer arrays into large buffer array
-      console.log(data.packet);
-      props.socket.emit('toServerRequestDetails', {
-        cone: data.cone,
-        path: data.path,
-        host: data.host,
-        sliceNum: nextSliceReq
-      });
+      if (!data.msg) {
+        let nextSliceReq = data.sliceNum + 1;
+        // Combine buffer arrays into large buffer array
+        let found = false;
+        if (bufferQueue.length > 0) {
+          for (let i = 0; i < bufferQueue.length; i++) {
+            if (bufferQueue[i].path == data.path) {
+              found = true;
+              bufferQueue[i].buffer.push(data.packet);
+              break;
+            }
+          }
+        }
+
+        if (!found) {
+          bufferQueue.push({
+            path: data.path,
+            buffer: [data.packet]
+          });
+        }
+
+        props.socket.emit('toServerRequestDetails', {
+          cone: data.cone,
+          path: data.path,
+          host: data.host,
+          sliceNum: nextSliceReq
+        });
+      } else {
+        if (bufferQueue.length > 0) {
+          for (let i = 0; i < bufferQueue.length; i++) {
+            if (bufferQueue[i].path == data.path) {
+              const file = new Blob(bufferQueue[i].buffer, {
+                type: 'jpeg'
+              });
+              console.log(file);
+              var link = document.createElement('a');
+              link.href = window.URL.createObjectURL(file);
+              link.download = 'download';
+              link.click();
+            }
+          }
+        }
+      }
     });
 
     const prevTime = Date.parse(localStorage.getItem('disTime'));
