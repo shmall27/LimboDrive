@@ -9,7 +9,7 @@ import UserInvite from './UserInvite';
 import './styles.css';
 
 const io = require('socket.io-client');
-const socket = io('http://localhost:2000');
+const socket = io('https://limbo-drive.herokuapp.com/');
 
 function Room() {
   const [dirName, setDirName] = useState(null);
@@ -24,7 +24,7 @@ function Room() {
   useEffect(() => {
     if (localStorage.length > 0) {
       axios
-        .post('http://localhost:2000/rooms-files/', {
+        .post('https://limbo-drive.herokuapp.com/rooms-files/', {
           jwt: JSON.parse(window.localStorage.getItem('jwt')).data,
           dirID,
         })
