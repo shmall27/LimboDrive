@@ -17,6 +17,10 @@ function Home() {
         this software. The File System Access API works much more seamlessly on
         an incognito window (I have no idea why).
       </p>
+      <p>
+        File Types: Not all file types are curerntly supported, however, that
+        should be fixed soon (hopefully).
+      </p>
       <Login />
       <br />
       <SignUp />

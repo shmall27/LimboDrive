@@ -2,6 +2,7 @@
 import React, { useEffect } from 'react';
 import axios from 'axios';
 import FileUI from './FileUI';
+const mime = require('mime-types');
 
 const packetSize = 16 * 1024;
 let db;
@@ -179,14 +180,13 @@ function UploadForm(props) {
       } else {
         if (bufferQueue.length > 0) {
           for (let i = 0; i < bufferQueue.length; i++) {
-            if (bufferQueue[i].path == data.path) {
+            if (bufferQueue[i].path === data.path) {
               const file = new Blob(bufferQueue[i].buffer, {
-                type: 'jpeg'
+                type: mime.lookup(data.path)
               });
-              console.log(file);
-              var link = document.createElement('a');
+              const link = document.createElement('a');
               link.href = window.URL.createObjectURL(file);
-              link.download = 'download';
+              link.download = data.path.match(/[^/]+$/g);
               link.click();
             }
           }
