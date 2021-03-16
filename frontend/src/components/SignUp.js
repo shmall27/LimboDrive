@@ -9,7 +9,7 @@ function SignUp() {
 
   function submitPost() {
     axios
-      .post('http://localhost:2000/signup', {
+      .post(`http://localhost:${process.env.PORT}/signup`, {
         creds,
       })
       .then(
@@ -17,7 +17,7 @@ function SignUp() {
           window.localStorage.setItem('jwt', JSON.stringify(response));
           document.getElementById('email-signup').value = '';
           document.getElementById('password-signup').value = '';
-          window.location.href = 'http://localhost:3000/rooms';
+          window.location.href = 'https://limbo-drive.herokuapp.com/rooms';
         },
         (error) => {
           console.log(error);

@@ -18,16 +18,16 @@ function DirName(props) {
       if (props.text !== inputValue) {
         //Update database here
         axios
-          .post('http://localhost:2000/update-name', {
+          .post(`http://localhost:${process.env.PORT}/update-name`, {
             jwt: JSON.parse(window.localStorage.getItem('jwt')).data,
             dirName: inputValue,
-            dirID: props.dirID
+            dirID: props.dirID,
           })
           .then(
-            response => {
+            (response) => {
               console.log(response);
             },
-            error => {
+            (error) => {
               console.log(error);
             }
           );
@@ -49,16 +49,16 @@ function DirName(props) {
         if (props.text !== inputValue) {
           //Update database here
           axios
-            .post('http://localhost:2000/update-name', {
+            .post(`http://localhost:${process.env.PORT}/update-name`, {
               jwt: JSON.parse(window.localStorage.getItem('jwt')).data,
               dirName: inputValue,
-              dirID: props.dirID
+              dirID: props.dirID,
             })
             .then(
-              response => {
+              (response) => {
                 console.log(response);
               },
-              error => {
+              (error) => {
                 console.log(error);
               }
             );
@@ -72,7 +72,7 @@ function DirName(props) {
     }
   }, [enter, esc]); // watch the Enter and Escape key presses
   return (
-    <span className="inline-text" ref={wrapperRef}>
+    <span className='inline-text' ref={wrapperRef}>
       <span
         ref={textRef}
         onClick={() => setIsInputActive(true)}
@@ -88,7 +88,7 @@ function DirName(props) {
         // it's not quite right but gets it close
         style={{ width: Math.ceil(inputValue.length * 0.9) + 'ex' }}
         value={inputValue}
-        onChange={e => {
+        onChange={(e) => {
           setInputValue(e.target.value);
         }}
         className={`inline-text_input inline-text_input--${

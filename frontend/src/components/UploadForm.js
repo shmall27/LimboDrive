@@ -185,7 +185,7 @@ function UploadForm(props) {
       console.log('Delete database!');
 
       axios
-        .post('http://localhost:2000/delete-tree', {
+        .post(`http://localhost:${process.env.PORT}/delete-tree`, {
           jwt: JSON.parse(window.localStorage.getItem('jwt')).data,
         })
         .then(
@@ -247,7 +247,7 @@ function UploadForm(props) {
               //Send files to express server
               if (localStorage.length > 0) {
                 axios
-                  .post('http://localhost:2000/upload', {
+                  .post(`http://localhost:${process.env.PORT}/upload`, {
                     dirID: props.dirID,
                     fileTree: {
                       name: fileTree.name,

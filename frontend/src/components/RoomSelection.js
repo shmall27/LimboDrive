@@ -6,14 +6,14 @@ function RoomSelection() {
   useEffect(() => {
     if (localStorage.length > 0) {
       axios
-        .post('http://localhost:2000/rooms', {
-          jwt: JSON.parse(window.localStorage.getItem('jwt')).data
+        .post(`http://localhost:${process.env.PORT}/rooms`, {
+          jwt: JSON.parse(window.localStorage.getItem('jwt')).data,
         })
         .then(
-          response => {
+          (response) => {
             setDirName(response.data);
           },
-          error => {
+          (error) => {
             console.log(error);
           }
         );
@@ -25,40 +25,40 @@ function RoomSelection() {
         <h3>Select a room or create a new one!</h3>
         <br />
         <button
-          onClick={e => {
+          onClick={(e) => {
             e.preventDefault();
             if (localStorage.length > 0) {
               axios
-                .post('http://localhost:2000/room-create', {
-                  jwt: JSON.parse(window.localStorage.getItem('jwt')).data
+                .post(`http://localhost:${process.env.PORT}/room-create`, {
+                  jwt: JSON.parse(window.localStorage.getItem('jwt')).data,
                 })
                 .then(
-                  response => {},
-                  error => {
+                  (response) => {},
+                  (error) => {
                     console.log(error);
                   }
                 );
             }
           }}
-          type="button"
+          type='button'
         >
           Create a new room!
         </button>
         {dirName &&
-          dirName.map(dirs => (
+          dirName.map((dirs) => (
             <p
-              onClick={e => {
+              onClick={(e) => {
                 if (localStorage.length > 0) {
                   axios
-                    .post('http://localhost:2000/room-select', {
+                    .post(`http://localhost:${process.env.PORT}/room-select`, {
                       jwt: JSON.parse(window.localStorage.getItem('jwt')).data,
-                      dirID: dirs[1]
+                      dirID: dirs[1],
                     })
                     .then(
-                      response => {
+                      (response) => {
                         window.location.href = `http://localhost:3000/rooms/${dirs[1]}`;
                       },
-                      error => {
+                      (error) => {
                         console.log(error);
                       }
                     );

@@ -3,17 +3,17 @@ import axios from 'axios';
 
 function deleteFolder(db, folder) {
   const tx = db.transaction('file_tree', 'readwrite');
-  tx.oncomplete = e => {
+  tx.oncomplete = (e) => {
     console.log('Database opened.');
   };
-  tx.onerror = e => {
+  tx.onerror = (e) => {
     console.log(`Error: ${tx.error}`);
   };
 
   const objectStore = tx.objectStore('file_tree');
 
   const deleteReq = objectStore.delete(folder);
-  deleteReq.onsuccess = e => {
+  deleteReq.onsuccess = (e) => {
     console.log(`${folder} has been deleted`);
   };
 }
@@ -22,10 +22,10 @@ function FileUI(props) {
   const [miniTree, treeSet] = useState();
   if (typeof props.items !== 'undefined') {
     if (props.items.length > 0) {
-      return props.items.map(item => {
+      return props.items.map((item) => {
         if (item.expand === false) {
           return (
-            <div key={item.name} className="fileIcon">
+            <div key={item.name} className='fileIcon'>
               <label
                 onClick={() => {
                   if (item.children.length !== 0) {
@@ -39,14 +39,14 @@ function FileUI(props) {
               </label>
               {props.hostEmail !== window.localStorage.getItem('email') && (
                 <button
-                  id="downlaod"
-                  onClick={e => {
+                  id='downlaod'
+                  onClick={(e) => {
                     e.preventDefault();
                     if (item) {
                       props.socket.emit('fileSelect', {
                         path: item.path,
                         host: props.host,
-                        dirID: props.dirID
+                        dirID: props.dirID,
                       });
                     }
                   }}
@@ -55,27 +55,30 @@ function FileUI(props) {
               {item.path.split('/').length - 1 < 2 &&
                 props.hostEmail === window.localStorage.getItem('email') && (
                   <button
-                    id="delete"
-                    onClick={e => {
+                    id='delete'
+                    onClick={(e) => {
                       e.preventDefault();
                       axios
-                        .post('http://localhost:2000/delete-folder', {
-                          jwt: JSON.parse(window.localStorage.getItem('jwt'))
-                            .data,
-                          path: item.path,
-                          dirID: props.dirID
-                        })
+                        .post(
+                          `http://localhost:${process.env.PORT}/delete-folder`,
+                          {
+                            jwt: JSON.parse(window.localStorage.getItem('jwt'))
+                              .data,
+                            path: item.path,
+                            dirID: props.dirID,
+                          }
+                        )
                         .then(
-                          response => {
+                          (response) => {
                             console.log(response);
                           },
-                          error => {
+                          (error) => {
                             console.log(error);
                           }
                         );
                       const openDB = indexedDB.open('virtualFS');
 
-                      openDB.onsuccess = e => {
+                      openDB.onsuccess = (e) => {
                         console.log('DB initialized.');
                         const db = openDB.result;
                         deleteFolder(db, item.name);
@@ -88,7 +91,7 @@ function FileUI(props) {
         } else {
           item.expand = false;
           return (
-            <div key={item.name} className="fileIcon">
+            <div key={item.name} className='fileIcon'>
               <b
                 onClick={() => {
                   treeSet(item);

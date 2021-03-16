@@ -5,18 +5,18 @@ function UserInvite(props) {
   const [userInvite, setUserInvite] = useState('');
   return (
     <form
-      onSubmit={e => {
+      onSubmit={(e) => {
         e.preventDefault();
         if (localStorage.length > 0) {
           axios
-            .post('http://localhost:2000/invite-user', {
+            .post(`http://localhost:${process.env.PORT}/invite-user`, {
               jwt: JSON.parse(window.localStorage.getItem('jwt')).data,
               userEmail: userInvite,
-              dirID: props.dirID
+              dirID: props.dirID,
             })
             .then(
-              response => {},
-              error => {
+              (response) => {},
+              (error) => {
                 console.log(error);
               }
             );
@@ -24,13 +24,13 @@ function UserInvite(props) {
       }}
     >
       <input
-        type="text"
-        placeholder="Invite via email"
-        onChange={e => {
+        type='text'
+        placeholder='Invite via email'
+        onChange={(e) => {
           setUserInvite(e.target.value);
         }}
       />
-      <input type="submit" value="Submit" />
+      <input type='submit' value='Submit' />
     </form>
   );
 }
