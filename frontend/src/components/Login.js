@@ -9,7 +9,7 @@ function Login() {
 
   function submitPost() {
     axios
-      .post('http://localhost:2000/login', {
+      .post(`http://localhost:${process.env.PORT}/login`, {
         creds,
       })
       .then(
@@ -18,7 +18,7 @@ function Login() {
           window.localStorage.setItem('email', creds.email);
           document.getElementById('email-login').value = '';
           document.getElementById('password-login').value = '';
-          window.location.href = 'http://localhost:3000/rooms';
+          window.location.href = 'https://limbo-drive.herokuapp.com/rooms';
         },
         (error) => {
           //Handle incorrect creds
