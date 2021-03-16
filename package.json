@@ -4,7 +4,7 @@
   "description": "Peer to peer web software for drive sharing in the browser.",
   "main": "index.js",
   "scripts": {
-    "server": "nodemon backend/server.js",
+    "start": "nodemon server.js",
     "heroku-postbuild": "NPM_CONFIG_PRODUCTION=false npm install --prefix frontend && npm run build --prefix frontend"
   },
   "repository": {
