@@ -6,6 +6,8 @@ const jwt = require('jsonwebtoken');
 const app = express();
 const httpServer = require('http').createServer(app);
 
+const path = require('path');
+
 require('dotenv').config();
 
 const Rooms = require('./models/Rooms');
@@ -16,7 +18,7 @@ httpServer.listen(port, () => console.log(`Server running on port ${port}`));
 
 const connParams = {
   useNewUrlParser: true,
-  useUnifiedTopology: true
+  useUnifiedTopology: true,
 };
 
 const temp_db = mongoose.createConnection(
@@ -33,20 +35,31 @@ const DBRooms = temp_db.model('DBRooms', Rooms);
 
 const DBUsers = user_db.model('DBUsers', Users);
 
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, '/frontend/build')));
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'frontend', 'build', 'index.html'));
+  });
+} else {
+  app.get('/', (req, res) => {
+    res.send('Web App Running');
+  });
+}
+
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 
 const io = require('socket.io')(httpServer, {
   cors: {
-    origin: 'http://localhost:3000'
-  }
+    origin: 'http://localhost:3000',
+  },
 });
 
 //Socket.io Middleware
 let userSocketIDs = [];
 
-io.on('connection', socket => {
-  socket.on('userSocket', data => {
+io.on('connection', (socket) => {
+  socket.on('userSocket', (data) => {
     let userID = jwt.verify(data.userID, process.env.JWT_TOKEN_SECRET).id;
     let found = false;
     if (userSocketIDs.length > 0) {
@@ -69,12 +82,12 @@ io.on('connection', socket => {
         userID,
         socketID: socket.id,
         dirID: data.dirID,
-        disconnected: false
+        disconnected: false,
       });
     }
   });
 
-  socket.on('disconnect', reason => {
+  socket.on('disconnect', (reason) => {
     for (let i = 0; i < userSocketIDs.length; i++) {
       if (userSocketIDs[i].socketID == socket.id) {
         userSocketIDs[i].disconnected = true;
@@ -92,10 +105,10 @@ io.on('connection', socket => {
     }
   });
 
-  socket.on('fileSelect', data => {
+  socket.on('fileSelect', (data) => {
     let hostSocket;
     let reqSocket = socket.id;
-    userSocketIDs.map(idPairs => {
+    userSocketIDs.map((idPairs) => {
       if (idPairs.userID == data.host) {
         hostSocket = idPairs.socketID;
       }
@@ -106,40 +119,40 @@ io.on('connection', socket => {
         host: hostSocket,
         cone: reqSocket,
         dirID: data.dirID,
-        sliceNum: 1
+        sliceNum: 1,
       });
     }
   });
 
-  socket.on('toServerPacket', data => {
+  socket.on('toServerPacket', (data) => {
     if (!data.msg) {
       io.to(data.cone).emit('toConePacket', {
         packet: data.packet,
         cone: data.cone,
         path: data.path,
         host: data.host,
-        sliceNum: data.sliceNum
+        sliceNum: data.sliceNum,
       });
     } else {
       io.to(data.cone).emit('toConePacket', {
         msg: data.msg,
-        path: data.path
+        path: data.path,
       });
     }
   });
 
-  socket.on('toServerRequestDetails', data => {
+  socket.on('toServerRequestDetails', (data) => {
     io.to(data.host).emit('selectedFile', {
       path: data.path,
       cone: data.cone,
       host: data.host,
-      sliceNum: data.sliceNum
+      sliceNum: data.sliceNum,
     });
   });
 });
 
 //Emits changes so rooms don't need to refresh
-DBRooms.watch().on('change', async change => {
+DBRooms.watch().on('change', async (change) => {
   const updatedDocID = change.documentKey._id;
   const updatedDoc = await DBRooms.findById(updatedDocID).exec();
   console.log(updatedDoc);
@@ -152,7 +165,7 @@ DBRooms.watch().on('change', async change => {
         found = true;
         io.to(userSocketIDs[i].socketID).emit('Update', {
           dirName: updatedDoc.dirName,
-          userFiles: updatedDoc.userFiles
+          userFiles: updatedDoc.userFiles,
         });
         break;
       }
@@ -175,13 +188,13 @@ app.post('/upload', async (req, res) => {
       const fileTreeObj = {
         name: req.body.fileTree.name,
         path: req.body.fileTree.path,
-        children: req.body.fileTree.children
+        children: req.body.fileTree.children,
       };
 
       //Check to see if the user has already uploaded files before
       const userHasUploaded = await DBRooms.findOne({
         _id: dirID,
-        'userFiles.hostEmail': host.email
+        'userFiles.hostEmail': host.email,
       });
 
       //If they have uploaded before, push their new upload to their previous fileTree
@@ -189,7 +202,7 @@ app.post('/upload', async (req, res) => {
         DBRooms.findOneAndUpdate(
           {
             _id: dirID,
-            'userFiles.hostEmail': host.email
+            'userFiles.hostEmail': host.email,
           },
           { $push: { 'userFiles.$.fileTree': fileTreeObj } },
           (err, res) => {
@@ -210,9 +223,9 @@ app.post('/upload', async (req, res) => {
               userFiles: {
                 hostEmail: host.email,
                 hostID: host._id,
-                fileTree: fileTreeObj
-              }
-            }
+                fileTree: fileTreeObj,
+              },
+            },
           },
           (err, res) => {
             if (err) {
@@ -258,7 +271,7 @@ app.post('/delete-folder', async (req, res) => {
       DBRooms.findOneAndUpdate(
         {
           _id: dirID,
-          'userFiles.hostID': hostID
+          'userFiles.hostID': hostID,
         },
         { $pull: { 'userFiles.$.fileTree': { path: deletedFolder } } },
         (err, res) => {
@@ -286,7 +299,7 @@ app.post('/rooms-files', (req, res) => {
   } else {
     try {
       jwt.verify(webToken, process.env.JWT_TOKEN_SECRET);
-      DBRooms.find({ _id: dirID }, function(err, result) {
+      DBRooms.find({ _id: dirID }, function (err, result) {
         if (err) {
           console.log(err);
         } else {
@@ -308,7 +321,7 @@ app.post('/rooms', async (req, res) => {
   } else {
     try {
       const userDocs = await DBRooms.find({
-        authUsers: `${jwt.verify(webToken, process.env.JWT_TOKEN_SECRET).id}`
+        authUsers: `${jwt.verify(webToken, process.env.JWT_TOKEN_SECRET).id}`,
       }).exec();
       for (let i = 0; i < userDocs.length; i++) {
         dirList.push([userDocs[i].dirName, userDocs[i]._id]);
@@ -330,8 +343,8 @@ app.post('/room-create', async (req, res) => {
       jwt.verify(webToken, process.env.JWT_TOKEN_SECRET);
       new DBRooms({
         authUsers: jwt.verify(webToken, process.env.JWT_TOKEN_SECRET).id,
-        dirName: 'untitled'
-      }).save(err => {
+        dirName: 'untitled',
+      }).save((err) => {
         console.log(err);
       });
     } catch (err) {
@@ -367,7 +380,7 @@ app.post('/update-name', (req, res) => {
       DBRooms.findOneAndUpdate(
         {
           _id: dirID,
-          authUsers: jwt.verify(webToken, process.env.JWT_TOKEN_SECRET).id
+          authUsers: jwt.verify(webToken, process.env.JWT_TOKEN_SECRET).id,
         },
         { dirName: dirName },
         (err, res) => {
@@ -397,13 +410,13 @@ app.post('/invite-user', async (req, res) => {
       const userID = jwt.verify(webToken, process.env.JWT_TOKEN_SECRET).id;
       const checkEmail = await DBUsers.findOne({ email: invitedUser });
       const userAlreadyInvited = await DBRooms.findOne({
-        authUsers: checkEmail._id
+        authUsers: checkEmail._id,
       });
       if (userAlreadyInvited == null && checkEmail != null) {
         DBRooms.findOneAndUpdate(
           {
             _id: dirID,
-            authUsers: userID
+            authUsers: userID,
           },
           { $push: { authUsers: checkEmail._id } },
           (err, res) => {
@@ -455,10 +468,10 @@ app.post('/signup', async (req, res) => {
   if (!userExists) {
     const dbSignUp = new DBUsers({
       email: req.body.creds.email,
-      password: hashedPassword
+      password: hashedPassword,
     });
 
-    dbSignUp.save(err => {
+    dbSignUp.save((err) => {
       if (err) {
         return handleError(err);
       }
