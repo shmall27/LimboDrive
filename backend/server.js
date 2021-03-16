@@ -13,8 +13,9 @@ require('dotenv').config();
 const Rooms = require('./models/Rooms');
 const Users = require('./models/Users');
 
-const port = 2000;
-httpServer.listen(port, () => console.log(`Server running on port ${port}`));
+httpServer.listen(process.env.PORT, () =>
+  console.log(`Server running on port ${process.env.PORT}`)
+);
 
 const connParams = {
   useNewUrlParser: true,

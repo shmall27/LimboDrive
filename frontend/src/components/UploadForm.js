@@ -185,7 +185,7 @@ function UploadForm(props) {
       console.log('Delete database!');
 
       axios
-        .post('http://localhost:2000/delete-tree', {
+        .post(`http://localhost:2000/delete-tree`, {
           jwt: JSON.parse(window.localStorage.getItem('jwt')).data,
         })
         .then(
