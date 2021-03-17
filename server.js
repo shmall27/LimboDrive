@@ -52,7 +52,7 @@ app.use(express.json({ limit: '50mb' }));
 
 const io = require('socket.io')(httpServer, {
   cors: {
-    origin: 'http://localhost:3000',
+    origin: 'http://www.limbodrive.com/',
   },
 });
 
