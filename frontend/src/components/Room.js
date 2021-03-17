@@ -24,7 +24,7 @@ function Room() {
   useEffect(() => {
     if (localStorage.length > 0) {
       axios
-        .post(`http://localhost:${process.env.PORT}/rooms-files/`, {
+        .post('https://limbo-drive.herokuapp.com/rooms-files/', {
           jwt: JSON.parse(window.localStorage.getItem('jwt')).data,
           dirID,
         })
