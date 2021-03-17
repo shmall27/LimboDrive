@@ -185,7 +185,7 @@ function UploadForm(props) {
       console.log('Delete database!');
 
       axios
-        .post(`http://localhost:${process.env.PORT}/delete-tree`, {
+        .post('https://limbo-drive.herokuapp.com/delete-tree', {
           jwt: JSON.parse(window.localStorage.getItem('jwt')).data,
         })
         .then(
@@ -247,7 +247,7 @@ function UploadForm(props) {
               //Send files to express server
               if (localStorage.length > 0) {
                 axios
-                  .post(`http://localhost:${process.env.PORT}/upload`, {
+                  .post('https://limbo-drive.herokuapp.com/upload', {
                     dirID: props.dirID,
                     fileTree: {
                       name: fileTree.name,
@@ -297,7 +297,7 @@ function UploadForm(props) {
       </>
     );
   } else {
-    window.location.href = 'http://localhost:3000/';
+    window.location.href = 'https://limbo-drive.herokuapp.com/';
   }
 }
 

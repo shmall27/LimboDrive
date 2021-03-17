@@ -9,7 +9,7 @@ function UserInvite(props) {
         e.preventDefault();
         if (localStorage.length > 0) {
           axios
-            .post(`http://localhost:${process.env.PORT}/invite-user`, {
+            .post('https://limbo-drive.herokuapp.com/invite-user', {
               jwt: JSON.parse(window.localStorage.getItem('jwt')).data,
               userEmail: userInvite,
               dirID: props.dirID,

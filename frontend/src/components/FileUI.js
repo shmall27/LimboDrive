@@ -60,7 +60,7 @@ function FileUI(props) {
                       e.preventDefault();
                       axios
                         .post(
-                          `http://localhost:${process.env.PORT}/delete-folder`,
+                          'https://limbo-drive.herokuapp.com/delete-folder',
                           {
                             jwt: JSON.parse(window.localStorage.getItem('jwt'))
                               .data,

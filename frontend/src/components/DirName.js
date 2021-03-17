@@ -18,7 +18,7 @@ function DirName(props) {
       if (props.text !== inputValue) {
         //Update database here
         axios
-          .post(`http://localhost:${process.env.PORT}/update-name`, {
+          .post('https://limbo-drive.herokuapp.com/update-name', {
             jwt: JSON.parse(window.localStorage.getItem('jwt')).data,
             dirName: inputValue,
             dirID: props.dirID,
@@ -49,7 +49,7 @@ function DirName(props) {
         if (props.text !== inputValue) {
           //Update database here
           axios
-            .post(`http://localhost:${process.env.PORT}/update-name`, {
+            .post('https://limbo-drive.herokuapp.com/update-name', {
               jwt: JSON.parse(window.localStorage.getItem('jwt')).data,
               dirName: inputValue,
               dirID: props.dirID,

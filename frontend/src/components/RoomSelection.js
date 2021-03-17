@@ -6,7 +6,7 @@ function RoomSelection() {
   useEffect(() => {
     if (localStorage.length > 0) {
       axios
-        .post(`http://localhost:${process.env.PORT}/rooms`, {
+        .post('https://limbo-drive.herokuapp.com/rooms', {
           jwt: JSON.parse(window.localStorage.getItem('jwt')).data,
         })
         .then(
@@ -29,7 +29,7 @@ function RoomSelection() {
             e.preventDefault();
             if (localStorage.length > 0) {
               axios
-                .post(`http://localhost:${process.env.PORT}/room-create`, {
+                .post('https://limbo-drive.herokuapp.com/room-create', {
                   jwt: JSON.parse(window.localStorage.getItem('jwt')).data,
                 })
                 .then(
@@ -50,13 +50,13 @@ function RoomSelection() {
               onClick={(e) => {
                 if (localStorage.length > 0) {
                   axios
-                    .post(`http://localhost:${process.env.PORT}/room-select`, {
+                    .post('https://limbo-drive.herokuapp.com/room-select', {
                       jwt: JSON.parse(window.localStorage.getItem('jwt')).data,
                       dirID: dirs[1],
                     })
                     .then(
                       (response) => {
-                        window.location.href = `http://localhost:3000/rooms/${dirs[1]}`;
+                        window.location.href = `https://limbo-drive.herokuapp.com/rooms/${dirs[1]}`;
                       },
                       (error) => {
                         console.log(error);
@@ -72,7 +72,7 @@ function RoomSelection() {
       </>
     );
   } else {
-    window.location.href = 'http://localhost:3000/';
+    window.location.href = 'https://limbo-drive.herokuapp.com/';
   }
 }
 
