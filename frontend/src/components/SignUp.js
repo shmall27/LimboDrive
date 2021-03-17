@@ -9,7 +9,7 @@ function SignUp() {
 
   function submitPost() {
     axios
-      .post(`http://localhost:${process.env.PORT}/signup`, {
+      .post('https://limbo-drive.herokuapp.com/signup', {
         creds,
       })
       .then(
