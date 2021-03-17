@@ -6,7 +6,7 @@ function Home() {
     <>
       <h3>Welcome to the beta!</h3>
       <p>Notes:</p>
-      <p>Browser Compatibility: Chrome, and Edge (that I know of)</p>
+      <p>Browser Compatibility: Chrome, Edge, and Opera (that I know of)</p>
       <p>Style: Coming soon...</p>
       <p>
         Passwords: As this is my very first web app, I would recommend not using
